@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -52,6 +53,7 @@ class SupervisorService(
     private var counterNativeByteJob: Job? = null
     private var counterNativeSonnixJob: Job? = null
     private var counterNativeSeedhartaJob: Job? = null
+    private var updateSettingsJob: Job? = null
     private val supervisorServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val mLibVersion: Int
@@ -118,12 +120,24 @@ class SupervisorService(
             }
         }
 
+        updateSettingsJob = supervisorServiceScope.launch {
+            settingsRepo.settingsState.combine(gameUIConfFlow) { appSet, libSet ->
+                appSet.copy(
+                    isUseHtml = libSet.useHtml,
+                    textColor = if (appSet.isUseGameTextColor && libSet.fontColor != 0) { libSet.fontColor } else { appSet.textColor },
+                    backColor = if (appSet.isUseGameBackgroundColor && libSet.backColor != 0) { libSet.backColor } else { appSet.backColor },
+                    linkColor = if (appSet.isUseGameLinkColor && libSet.linkColor != 0) { libSet.linkColor } else { appSet.linkColor },
+                    fontSize = if (appSet.isUseGameFont && libSet.fontSize != 0) { libSet.fontSize } else { appSet.fontSize }
+                )
+            }.collect { settingsRepo.emitValue(it) }
+        }
     }
 
     override fun onCleared() {
         libNativeByte.stopLibThread()
         libNativeSonnix.stopLibThread()
         libNativeSeedharta.stopLibThread()
+        updateSettingsJob?.cancel()
         counterNativeByteJob?.cancel()
         counterNativeSonnixJob?.cancel()
         counterNativeSeedhartaJob?.cancel()

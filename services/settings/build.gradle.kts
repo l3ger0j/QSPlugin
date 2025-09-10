@@ -39,7 +39,6 @@ android {
 
 dependencies {
     implementation(project(":core:dto"))
-    implementation(project(":services:native-lib:supervisor"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
