@@ -24,7 +24,7 @@ object PathUtil {
         val relPath = this.toUri().path
         if (relPath.isNullOrEmpty()) return Uri.EMPTY
         val imageFile = rootDir.child(context, relPath)
-        if (!isWritableFile(context, imageFile)) return Uri.EMPTY
+        if (!imageFile.isWritableFile(context)) return Uri.EMPTY
         return imageFile.uri
     }
 

@@ -3,8 +3,6 @@ package org.qp.supervisor
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.anggrayudi.storage.extension.toDocumentFile
@@ -154,7 +152,7 @@ class SupervisorService(
                 }
             }
             .thenApplyAsync {
-                return@thenApplyAsync if (isWritableFile(context, it)) {
+                return@thenApplyAsync if (it.isWritableFile(context)) {
                     it.uri
                 } else {
                     Uri.EMPTY
@@ -181,7 +179,7 @@ class SupervisorService(
                 gameDir.makeFile(context, path, mimeType)
             }
             .thenApplyAsync {
-                if (isWritableFile(context, it)) {
+                if (it.isWritableFile(context)) {
                     return@thenApplyAsync it.uri
                 } else {
                     return@thenApplyAsync Uri.EMPTY
@@ -208,7 +206,7 @@ class SupervisorService(
         CompletableFuture
             .supplyAsync { gameDir.child(context, normPath) }
             .thenApplyAsync {
-                if (isWritableFile(context, it)) {
+                if (it.isWritableFile(context)) {
                     return@thenApplyAsync it.uri
                 } else {
                     val errorMsg = "Sound file by path: $filePath not writable"
@@ -251,7 +249,7 @@ class SupervisorService(
         CompletableFuture
             .supplyAsync { gameDir.child(context, normPath) }
             .thenApply {
-                return@thenApply if (isWritableFile(context, it)) {
+                return@thenApply if (it.isWritableFile(context)) {
                     it.uri
                 } else {
                     Uri.EMPTY
@@ -283,7 +281,7 @@ class SupervisorService(
         CompletableFuture
             .supplyAsync { gameDir.child(context, normPath) }
             .thenApply {
-                return@thenApply if (isWritableFile(context, it)) {
+                return@thenApply if (it.isWritableFile(context)) {
                     it.uri
                 } else {
                     Uri.EMPTY

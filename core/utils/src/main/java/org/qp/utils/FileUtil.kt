@@ -3,26 +3,21 @@ package org.qp.utils
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.anggrayudi.storage.FileWrapper
 import com.anggrayudi.storage.extension.openInputStream
-import com.anggrayudi.storage.file.child
 import com.anggrayudi.storage.file.isWritable
-import org.qp.utils.StreamUtil.copy
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 object FileUtil {
     @ExperimentalContracts
-    fun isWritableFile(context: Context, file: DocumentFile?): Boolean {
+    fun DocumentFile?.isWritableFile(context: Context): Boolean {
         contract {
-            returns() implies (file != null)
+            returns() implies (this@isWritableFile != null)
         }
-        if (file == null) return false
-        return file.exists() && file.isFile && file.isWritable(context)
+        if (this == null) return false
+        return this.exists() && this.isFile && this.isWritable(context)
     }
 
     @ExperimentalContracts
@@ -34,45 +29,27 @@ object FileUtil {
         return this.exists() && this.isDirectory && this.isWritable(context)
     }
 
-    fun getFileContents(
-        context: Context,
-        uriContent: Uri
-    ): ByteArray? {
-        try {
-            uriContent.openInputStream(context).use { input ->
-                ByteArrayOutputStream().use { out ->
-                    if (input != null) copy(input, out) else throw NullPointerException()
-                    return out.toByteArray()
-                }
-            }
-        } catch (ex: Exception) {
-            // TODO: 04.12.2024 Add logger
-            Log.e(javaClass.simpleName, "Error reading file: $uriContent", ex)
-            return null
+    fun Uri.readFileContents(context: Context): ByteArray? {
+        return runCatching {
+            this.openInputStream(context).use { it?.readBytes() ?: throw NullPointerException() }
+        }.getOrElse {
+            Log.e(javaClass.simpleName, "Error reading file: $this", it)
+            null
         }
     }
 
-    fun documentWrap(inputFile: DocumentFile): FileWrapper.Document {
-        return FileWrapper.Document(inputFile)
-    }
-
-    fun writeFileContents(
+    fun Uri.writeFileContents(
         context: Context,
-        uriContent: Uri,
-        dataToWrite: ByteArray?
+        dataToWrite: ByteArray
     ) {
-        val resolver = context.contentResolver
-        try {
-            resolver.openOutputStream(uriContent, "wt").use { out ->
-                if (out != null) {
-                    out.write(dataToWrite)
-                } else {
-                    throw IOException("Input is NULL!")
+        context.contentResolver
+            .runCatching {
+                openOutputStream(this@writeFileContents).use { out ->
+                    out?.write(dataToWrite) ?: throw IOException("Input is NULL!")
                 }
             }
-        } catch (ex: IOException) {
-            // TODO: 04.12.2024 Add logger
-            Log.e(javaClass.simpleName, "Error reading file: $uriContent", ex)
-        }
+            .onFailure {
+                Log.e(javaClass.simpleName, "Error reading file: $this", it)
+            }
     }
 }

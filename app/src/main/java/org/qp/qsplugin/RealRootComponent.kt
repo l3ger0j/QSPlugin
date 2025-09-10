@@ -296,7 +296,7 @@ class RealRootComponent(
                 val uriPath = request.url.path
                 if (uriPath == null) throw NullPointerException()
                 val imageFile = rootDir?.child(appContext, uriPath)
-                if (isWritableFile(appContext, imageFile)) {
+                if (imageFile.isWritableFile(appContext)) {
                     return WebResourceResponse(
                         getMimeTypeFromFileName(imageFile.name),
                         null,

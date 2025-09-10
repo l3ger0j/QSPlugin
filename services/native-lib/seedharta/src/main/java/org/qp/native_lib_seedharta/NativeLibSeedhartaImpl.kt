@@ -29,7 +29,7 @@ import org.qp.dto.LibReturnValue
 import org.qp.dto.LibTypeDialog
 import org.qp.dto.LibTypePopup
 import org.qp.dto.LibTypeWindow
-import org.qp.utils.FileUtil.getFileContents
+import org.qp.utils.FileUtil.readFileContents
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
 import org.qp.utils.FileUtil.writeFileContents
@@ -82,7 +82,7 @@ class NativeLibSeedhartaImpl(
         val gameFileUri = gameState.gameFileUri
         val gameFile = gameFileUri.toDocumentFile(context) ?: return false
         val gameFileFullPath = gameFile.getAbsolutePath(context)
-        val gameData = getFileContents(context, gameFileUri) ?: return false
+        val gameData = gameFileUri.readFileContents(context) ?: return false
 
         if (!QSPLoadGameWorldFromData(gameData, gameFileFullPath)) {
             showLastQspError()
@@ -151,7 +151,7 @@ class NativeLibSeedhartaImpl(
                 if (tempImagePath.isNotBlank()) {
                     val tempPath = tempImagePath.getFilename().normalizeContentPath()
                     val fileFromPath = gameDir.child(context, tempPath)
-                    if (isWritableFile(context, fileFromPath)) {
+                    if (fileFromPath.isWritableFile(context)) {
                         tempImagePath = fileFromPath.uri.toString()
                     }
                 }
@@ -179,13 +179,13 @@ class NativeLibSeedhartaImpl(
                 if (tempText.contains("<img")) {
                     if (!tempText.isContainsHtmlTags()) {
                         val fileFromPath = gameDir.child(context, tempText)
-                        if (isWritableFile(context, fileFromPath)) {
+                        if (fileFromPath.isWritableFile(context)) {
                             tempImagePath = fileFromPath.uri.toString()
                         }
                     } else {
                         val tempPath = tempText.getSrcDir()
                         val fileFromPath = gameDir.child(context, tempPath)
-                        if (isWritableFile(context, fileFromPath)) {
+                        if (fileFromPath.isWritableFile(context)) {
                             tempImagePath = fileFromPath.uri.toString()
                         }
                     }
@@ -274,7 +274,7 @@ class NativeLibSeedhartaImpl(
             return
         }
 
-        val gameData = getFileContents(context, uri) ?: return
+        val gameData = uri.readFileContents(context) ?: return
         if (!QSPOpenSavedGameFromData(gameData, true)) {
             showLastQspError()
         }
@@ -286,8 +286,10 @@ class NativeLibSeedhartaImpl(
             return
         }
 
-        val gameData = QSPSaveGameAsData(false) ?: return
-        writeFileContents(context, uri, gameData)
+        uri.writeFileContents(
+            context = context,
+            dataToWrite = QSPSaveGameAsData(false) ?: return
+        )
     }
 
     override fun onActionClicked(index: Int) {
@@ -515,7 +517,7 @@ class NativeLibSeedhartaImpl(
         val targetFileUri =
             runCatching { libScope.future { returnValueFlow.first() }.get().fileUri }.getOrElse { Uri.EMPTY }
         if (targetFileUri == Uri.EMPTY) return byteArrayOf()
-        return getFileContents(context, targetFileUri)
+        return targetFileUri.readFileContents(context)
     }
 
     @OptIn(ExperimentalContracts::class)

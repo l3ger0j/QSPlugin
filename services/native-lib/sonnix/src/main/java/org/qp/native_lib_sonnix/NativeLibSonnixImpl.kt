@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import androidx.core.os.HandlerCompat
 import androidx.documentfile.provider.DocumentFile
 import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.DocumentFileCompat.fromUri
@@ -28,7 +27,7 @@ import org.qp.dto.LibReturnValue
 import org.qp.dto.LibTypeDialog
 import org.qp.dto.LibTypePopup
 import org.qp.dto.LibTypeWindow
-import org.qp.utils.FileUtil.getFileContents
+import org.qp.utils.FileUtil.readFileContents
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
 import org.qp.utils.FileUtil.writeFileContents
@@ -81,7 +80,7 @@ class NativeLibSonnixImpl(
         val gameFileUri = gameState.gameFileUri
         val gameFile = gameFileUri.toDocumentFile(context) ?: return false
         val gameFileFullPath = gameFile.getAbsolutePath(context)
-        val gameData = getFileContents(context, gameFileUri) ?: return false
+        val gameData = gameFileUri.readFileContents(context) ?: return false
 
         if (!loadGameWorldFromData(gameData, gameFileFullPath)) {
             showLastQspError()
@@ -149,7 +148,7 @@ class NativeLibSonnixImpl(
                 if (tempImagePath.isNotBlank()) {
                     val tempPath = tempImagePath.getFilename().normalizeContentPath()
                     val fileFromPath = gameDir.child(context, tempPath)
-                    if (isWritableFile(context, fileFromPath)) {
+                    if (fileFromPath.isWritableFile(context)) {
                         tempImagePath = fileFromPath.uri.toString()
                     }
                 }
@@ -175,13 +174,13 @@ class NativeLibSonnixImpl(
                 if (tempText.contains("<img")) {
                     if (!tempText.isContainsHtmlTags()) {
                         val fileFromPath = gameDir.child(context, tempText)
-                        if (isWritableFile(context, fileFromPath)) {
+                        if (fileFromPath.isWritableFile(context)) {
                             tempImagePath = fileFromPath.uri.toString()
                         }
                     } else {
                         val tempPath = tempText.getSrcDir()
                         val fileFromPath = gameDir.child(context, tempPath)
-                        if (isWritableFile(context, fileFromPath)) {
+                        if (fileFromPath.isWritableFile(context)) {
                             tempImagePath = fileFromPath.uri.toString()
                         }
                     }
@@ -270,7 +269,7 @@ class NativeLibSonnixImpl(
             return
         }
 
-        val gameData = getFileContents(context, uri) ?: return
+        val gameData = uri.readFileContents(context) ?: return
         if (!openSavedGameFromData(gameData, true)) {
             showLastQspError()
         }
@@ -282,8 +281,10 @@ class NativeLibSonnixImpl(
             return
         }
 
-        val gameData = saveGameAsData(false) ?: return
-        writeFileContents(context, uri, gameData)
+        uri.writeFileContents(
+            context = context,
+            dataToWrite = saveGameAsData(false) ?: return
+        )
     }
 
     override fun onActionClicked(index: Int) {
