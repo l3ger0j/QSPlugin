@@ -42,6 +42,7 @@ dependencies {
     implementation(project(":core:dto"))
     implementation(project(":core:utils"))
     implementation(project(":services:audio"))
+    implementation(project(":services:settings"))
     implementation(project(":services:native-lib:byte"))
     implementation(project(":services::native-lib:sonnix"))
     implementation(project(":services::native-lib:seedharta"))

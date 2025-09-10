@@ -34,6 +34,7 @@ import org.qp.dto.LibUIConfig
 import org.qp.native_lib_byte.NativeLibByteImpl
 import org.qp.native_lib_seedharta.NativeLibSeedhartaImpl
 import org.qp.native_lib_sonnix.NativeLibSonnixImpl
+import org.qp.settings.SettingsRepo
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
 import org.qp.utils.PathUtil.normalizeContentPath
@@ -43,6 +44,7 @@ import kotlin.contracts.ExperimentalContracts
 
 class SupervisorService(
     private val audioPlayer: AudioPlayerService,
+    private val settingsRepo: SettingsRepo
 ) : ViewModel(), GameInterface, KoinComponent {
 
     private val context: Context by inject()
@@ -52,7 +54,8 @@ class SupervisorService(
     private var counterNativeSeedhartaJob: Job? = null
     private val supervisorServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    @Volatile private var mLibVersion = 570
+    private val mLibVersion: Int
+        get() = settingsRepo.settingsState.value.nativeLibVersion
     private val libNativeByte = NativeLibByteImpl(context, this)
     private val libNativeSonnix = NativeLibSonnixImpl(context, this)
     private val libNativeSeedharta = NativeLibSeedhartaImpl(context, this)
@@ -100,41 +103,117 @@ class SupervisorService(
 
         gameDirUri = dirUri
 
-        libNativeByte.startLibThread()
-        libNativeByte.runGame(id, title, dirUri, fileUri)
+        when (mLibVersion) {
+            595 -> {
+                libNativeByte.startLibThread()
+                libNativeByte.runGame(id, title, dirUri, fileUri)
+            }
+            575 -> {
+                libNativeSonnix.startLibThread()
+                libNativeSonnix.runGame(id, title, dirUri, fileUri)
+            }
+            570 -> {
+                libNativeSeedharta.startLibThread()
+                libNativeSeedharta.runGame(id, title, dirUri, fileUri)
+            }
+        }
+
     }
 
     override fun onCleared() {
         libNativeByte.stopLibThread()
+        libNativeSonnix.stopLibThread()
+        libNativeSeedharta.stopLibThread()
         counterNativeByteJob?.cancel()
         counterNativeSonnixJob?.cancel()
         counterNativeSeedhartaJob?.cancel()
     }
 
     fun onSaveFile(fileUri: Uri) {
-        libNativeByte.saveGameState(fileUri)
+        when (mLibVersion) {
+            595 -> {
+                libNativeByte.saveGameState(fileUri)
+            }
+            575 -> {
+                libNativeSonnix.saveGameState(fileUri)
+            }
+            570 -> {
+                libNativeSeedharta.saveGameState(fileUri)
+            }
+        }
     }
 
     fun onLoadFile(fileUri: Uri) {
         doWithCounterDisabled {
-            libNativeByte.loadGameState(fileUri)
+            when (mLibVersion) {
+                595 -> {
+                    libNativeByte.loadGameState(fileUri)
+                }
+                575 -> {
+                    libNativeSonnix.loadGameState(fileUri)
+                }
+                570 -> {
+                    libNativeSeedharta.loadGameState(fileUri)
+                }
+            }
         }
     }
 
     fun onCodeExec(execCode: String) {
-        libNativeByte.execute(execCode)
+        when (mLibVersion) {
+            595 -> {
+                libNativeByte.execute(execCode)
+            }
+            575 -> {
+                libNativeSonnix.execute(execCode)
+            }
+            570 -> {
+                libNativeSeedharta.execute(execCode)
+            }
+        }
     }
 
     fun onRestartGame() {
-        libNativeByte.restartGame()
+        when (mLibVersion) {
+            595 -> {
+                libNativeByte.restartGame()
+            }
+            575 -> {
+                libNativeSonnix.restartGame()
+
+            }
+            570 -> {
+                libNativeSeedharta.restartGame()
+            }
+        }
     }
 
     fun onActionClicked(index: Int) {
-        libNativeByte.onActionClicked(index)
+        when (mLibVersion) {
+            595 -> {
+                libNativeByte.onActionClicked(index)
+            }
+            575 -> {
+                libNativeSonnix.onActionClicked(index)
+            }
+            570 -> {
+                libNativeSeedharta.onActionClicked(index)
+            }
+        }
     }
 
     fun onObjectSelected(index: Int) {
-        libNativeByte.onObjectSelected(index)
+        when (mLibVersion) {
+            595 -> {
+                libNativeByte.onObjectSelected(index)
+            }
+            575 -> {
+                libNativeSonnix.onObjectSelected(index)
+            }
+            570 -> {
+                libNativeSeedharta.onObjectSelected(index)
+            }
+        }
     }
 
     @OptIn(ExperimentalContracts::class)
@@ -354,9 +433,25 @@ class SupervisorService(
     }
 
     override fun doWithCounterDisabled(runnable: Runnable) {
-        counterNativeByteJob?.cancel()
-        runnable.run()
-        counterNativeByteJob =
-            supervisorServiceScope.launch(block = counterNativeByteTask)
+        when (mLibVersion) {
+            595 -> {
+                counterNativeByteJob?.cancel()
+                runnable.run()
+                counterNativeByteJob =
+                    supervisorServiceScope.launch(block = counterNativeByteTask)
+            }
+            575 -> {
+                counterNativeSonnixJob?.cancel()
+                runnable.run()
+                counterNativeSonnixJob =
+                    supervisorServiceScope.launch(block = counterNativeSonnixTask)
+            }
+            570 -> {
+                counterNativeSeedhartaJob?.cancel()
+                runnable.run()
+                counterNativeSeedhartaJob =
+                    supervisorServiceScope.launch(block = counterNativeSeedhartaTask)
+            }
+        }
     }
 }
