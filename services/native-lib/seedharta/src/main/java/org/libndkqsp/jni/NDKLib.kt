@@ -1,91 +1,93 @@
-package org.libndkqsp.jni;
+package org.libndkqsp.jni
 
-public abstract class NDKLib {
+abstract class NDKLib {
+    @JvmRecord
+    data class ListItem(val image: String?, val text: String?)
 
-    public record ListItem(String image, String text) { }
+    @JvmRecord
+    data class ExecutionState(val loc: String?, val actIndex: Int, val lineNum: Int)
 
-    public record ExecutionState(String loc, int actIndex, int lineNum) { }
+    @JvmRecord
+    data class VarValResp(val isSuccess: Boolean, val stringValue: String?, val intValue: Int)
 
-    public record VarValResp(boolean isSuccess , String stringValue , int intValue) { }
+    @JvmRecord
+    data class ErrorData(val locName: String?, val errorNum: Int, val index: Int, val line: Int)
 
-    public record ErrorData(String locName , int errorNum , int index , int line) { }
-
-    static {
-        System.loadLibrary("ndkqsp");
+    companion object {
+        init {
+            System.loadLibrary("ndkqsp")
+        }
     }
 
-    public native void QSPInit();
-    public native void QSPDeInit();
-    public native boolean QSPIsInCallBack();
-    public native void QSPEnableDebugMode(boolean isDebug);
-    public native ExecutionState QSPGetCurStateData();//!!!STUB
-    public native String QSPGetVersion();
-    public native String QSPGetCompiledDateTime();
-    public native int QSPGetFullRefreshCount();
-    public native String QSPGetQstFullPath();
-    public native String QSPGetCurLoc();
-    public native Object QSPGetExprValue();//!!!STUB
-    /* Main desc */
-    public native String QSPGetMainDesc();
-    public native boolean QSPIsMainDescChanged();
-    /* Vars desc */
-    public native String QSPGetVarsDesc();
-    public native boolean QSPIsVarsDescChanged();
-    public native Object QSPGetVarValuesCount(String name);
-    public native VarValResp QSPGetVarValues(String name, int ind);//!!!STUB
-    public native int QSPGetMaxVarsCount();
-    public native Object QSPGetVarNameByIndex(int index);//!!!STUB
-    /* Input string */
-    public native void QSPSetInputStrText(String val);
-    /* Actions */
-    public native int QSPGetActionsCount();
-    public native ListItem[] QSPGetActionData();
-    public native boolean QSPExecuteSelActionCode(boolean isRefresh);
-    public native boolean QSPSetSelActionIndex(int ind, boolean isRefresh);
-    public native int QSPGetSelActionIndex();
-    public native boolean QSPIsActionsChanged();
-    /* Objects */
-    public native ListItem[] QSPGetObjectData();
-    public native int QSPGetObjectsCount();
-    public native boolean QSPSetSelObjectIndex(int ind, boolean isRefresh);
-    public native int QSPGetSelObjectIndex();
-    public native boolean QSPIsObjectsChanged();
-    /* Code execution */
-    public native boolean QSPExecString(String s, boolean isRefresh);
-    public native boolean QSPExecLocationCode(String name, boolean isRefresh);
-    public native boolean QSPExecCounter(boolean isRefresh);
-    public native boolean QSPExecUserInput(boolean isRefresh);
-    /* Errors */
-    public native ErrorData QSPGetLastErrorData();
-    public native String QSPGetErrorDesc(int errorNum);
-    /* Game */
-    public native boolean QSPLoadGameWorld(String fileName);
-    public native boolean QSPLoadGameWorldFromData(byte[] data, String fileName);
-    public native boolean QSPSaveGame(String fileName, boolean isRefresh);
-    public native byte[] QSPSaveGameAsData(boolean isRefresh);
-    public native boolean QSPOpenSavedGame(String fileName, boolean isRefresh);
-    public native boolean QSPOpenSavedGameFromData(byte[] data, boolean isRefresh);
-    public native boolean QSPRestartGame(boolean isRefresh);
-    public native void QSPSelectMenuItem(int index);
-    //public native void QSPSetCallBack(int type, QSP_CALLBACK func)
+    // --- Lifecycle and State ---
+    external fun init()
+    external fun terminate()
+    external fun enableDebugMode(isDebug: Boolean)
 
-    public void CallDebug(String str) {}
-    public void RefreshInt() { }
-    public void ShowPicture(String path) { }
-    public void SetTimer(int msecs) { }
-    public void ShowMessage(String message) { }
-    public void PlayFile(String path, int volume) { }
-    public boolean IsPlayingFile(final String path) { return false; }
-    public void CloseFile(String path) { }
-    public void OpenGame(String filename) { }
-    public void SaveGame(String filename) { }
-    public String InputBox(String prompt) { return null; }
-    public int GetMSCount() { return 0; }
-    public void AddMenuItem(String name, String imgPath) { }
-    public void ShowMenu() { }
-    public void DeleteMenu() { }
-    public void Wait(int msecs) { }
-    public void ShowWindow(int type, boolean isShow) { }
-    public byte[] GetFileContents(String path) { return null; }
-    public void ChangeQuestPath(String path) { }
+    // --- Main Description ---
+    external fun getMainDesc(): String?
+
+    // --- Variables Description ---
+    external fun getVarsDesc(): String?
+
+    /**
+     * Gets the number of values for a given variable array.
+     * @param name The name of the variable.
+     * @return The count of values, or 0 if the variable is not found.
+     */
+    external fun getVarValues(name: String, ind: Int): VarValResp? //!!!STUB
+
+    // --- Input ---
+    external fun setInputStrText(text: String)
+
+    // --- Actions ---
+    external fun getActionData(): Array<ListItem?>?
+    external fun executeSelActionCode(isRefresh: Boolean): Boolean
+    external fun setSelActionIndex(ind: Int, isRefresh: Boolean): Boolean
+
+    // --- Objects ---
+    external fun getObjectData(): Array<ListItem?>?
+    external fun setSelObjectIndex(ind: Int, isRefresh: Boolean): Boolean
+
+    // --- Code execution ---
+    external fun execString(s: String?, isRefresh: Boolean): Boolean
+    external fun execCounter(isRefresh: Boolean): Boolean
+    external fun execUserInput(isRefresh: Boolean): Boolean
+
+    // --- Errors ---
+    external fun getLastErrorData(): ErrorData?
+    external fun getErrorDesc(errorNum: Int): String?
+
+    // --- Game ---
+    external fun loadGameWorldFromData(data: ByteArray?, fileName: String?): Boolean
+    external fun saveGameAsData(isRefresh: Boolean): ByteArray?
+    external fun openSavedGameFromData(data: ByteArray?, isRefresh: Boolean): Boolean
+    external fun restartGame(isRefresh: Boolean): Boolean
+    external fun selectMenuItem(index: Int)
+
+    // --- Callbacks from Native Code ---
+    abstract fun callDebug(str: String?)
+    abstract fun refreshInt()
+
+    abstract fun onShowImage(path: String?)
+    abstract fun onShowMessage(message: String?)
+    abstract fun onShowWindow(type: Int, isShow: Boolean)
+
+    abstract fun onPlayFile(path: String?, volume: Int)
+    abstract fun onIsPlayingFile(path: String?): Boolean
+    abstract fun onCloseFile(path: String?)
+
+    abstract fun onOpenGame(filename: String?)
+    abstract fun onSaveGameStatus(filename: String?)
+    abstract fun onInputBox(prompt: String?): String?
+
+    abstract fun onSetTimer(msecs: Int)
+    abstract fun onGetMsCount(): Int
+    abstract fun onSleep(msecs: Int)
+
+    abstract fun onAddMenuItem(name: String?, imgPath: String?)
+    abstract fun onShowMenu()
+
+    abstract fun onGetFileContents(path: String?): ByteArray?
+    abstract fun onChangeQuestPath(path: String?)
 }

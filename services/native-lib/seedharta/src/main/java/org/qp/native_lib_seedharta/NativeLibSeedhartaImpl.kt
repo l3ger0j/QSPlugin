@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalContracts::class)
+
 package org.qp.native_lib_seedharta
 
 import android.content.Context
@@ -29,9 +31,9 @@ import org.qp.dto.LibReturnValue
 import org.qp.dto.LibTypeDialog
 import org.qp.dto.LibTypePopup
 import org.qp.dto.LibTypeWindow
-import org.qp.utils.FileUtil.readFileContents
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
+import org.qp.utils.FileUtil.readFileContents
 import org.qp.utils.FileUtil.writeFileContents
 import org.qp.utils.HtmlUtil.getSrcDir
 import org.qp.utils.HtmlUtil.isContainsHtmlTags
@@ -84,7 +86,7 @@ class NativeLibSeedhartaImpl(
         val gameFileFullPath = gameFile.getAbsolutePath(context)
         val gameData = gameFileUri.readFileContents(context) ?: return false
 
-        if (!QSPLoadGameWorldFromData(gameData, gameFileFullPath)) {
+        if (!loadGameWorldFromData(gameData, gameFileFullPath)) {
             showLastQspError()
             return false
         }
@@ -93,7 +95,7 @@ class NativeLibSeedhartaImpl(
     }
 
     private fun showLastQspError() {
-        val errorData = QSPGetLastErrorData()
+        val errorData = getLastErrorData()!!
         gameInterface.showLibDialog(
             dialogType = LibTypeDialog.DIALOG_ERROR,
             inputString =
@@ -102,7 +104,7 @@ class NativeLibSeedhartaImpl(
                 Action: ${errorData.index}
                 Line: ${errorData.line}
                 Error number: ${errorData.errorNum}
-                Description: ${QSPGetErrorDesc(errorData.errorNum) ?: ""}
+                Description: ${getErrorDesc(errorData.errorNum) ?: ""}
                 """.trimIndent()
         )
     }
@@ -112,11 +114,11 @@ class NativeLibSeedhartaImpl(
      *
      */
     private fun loadUIConfiguration() {
-        val htmlResult = QSPGetVarValues("USEHTML", 0)
-        val fSizeResult = QSPGetVarValues("FSIZE", 0)
-        val bColorResult = QSPGetVarValues("BCOLOR", 0)
-        val fColorResult = QSPGetVarValues("FCOLOR", 0)
-        val lColorResult = QSPGetVarValues("LCOLOR", 0)
+        val htmlResult = getVarValues("USEHTML", 0)!!
+        val fSizeResult = getVarValues("FSIZE", 0)!!
+        val bColorResult = getVarValues("BCOLOR", 0)!!
+        val fColorResult = getVarValues("FCOLOR", 0)!!
+        val lColorResult = getVarValues("LCOLOR", 0)!!
 
         val useHtml = htmlResult.intValue != 0
         val oldConfig = gameInterface.gameUIConfFlow.value
@@ -134,14 +136,13 @@ class NativeLibSeedhartaImpl(
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     private val actionsList: List<LibGenItem>
         get() {
             val gameDir = currGameDir
             if (!gameDir.isWritableDir(context)) return emptyList()
 
             val actions = mutableListOf<LibGenItem>()
-            for (element in QSPGetActionData() ?: return emptyList()) {
+            for (element in getActionData() ?: return emptyList()) {
                 if (element == null) continue
                 var tempImagePath = element.image ?: ""
                 val tempText = element.text ?: ""
@@ -162,14 +163,13 @@ class NativeLibSeedhartaImpl(
             return actions
         }
 
-    @OptIn(ExperimentalContracts::class)
     private val objectsList: List<LibGenItem>
         get() {
             val gameDir = currGameDir
             if (!gameDir.isWritableDir(context)) return emptyList()
 
             val objects = mutableListOf<LibGenItem>()
-            for (element in QSPGetObjectData() ?: return emptyList()) {
+            for (element in getObjectData() ?: return emptyList()) {
                 if (element == null) continue
                 var tempImagePath = element.image ?: ""
                 val tempText = element.text ?: ""
@@ -200,7 +200,7 @@ class NativeLibSeedhartaImpl(
     // region LibQpProxy
     override fun startLibThread() {
         libThread = thread(name = "libNDKQSP") {
-            QSPInit()
+            init()
             Looper.prepare()
             libHandler = Handler(Looper.myLooper()!!)
             libThreadInit = true
@@ -208,7 +208,7 @@ class NativeLibSeedhartaImpl(
                 libQueue.poll()?.run()
             }
             Looper.loop()
-            QSPDeInit()
+            terminate()
         }
     }
 
@@ -225,9 +225,9 @@ class NativeLibSeedhartaImpl(
         libThread?.interrupt()
     }
 
-    override fun enableDebugMode(isDebug: Boolean) {
-        runOnQspThread { enableDebugMode(isDebug) }
-    }
+//    override fun enableDebugMode(isDebug: Boolean) {
+//        runOnQspThread { enableDebugMode(isDebug) }
+//    }
 
     override fun runGame(
         gameId: Long,
@@ -262,7 +262,7 @@ class NativeLibSeedhartaImpl(
             if (!loadGameWorld()) return@doWithCounterDisabled
             gameStartTime = SystemClock.elapsedRealtime()
             lastMsCountCallTime = 0
-            if (!QSPRestartGame(true)) {
+            if (!restartGame(true)) {
                 showLastQspError()
             }
         }
@@ -275,7 +275,7 @@ class NativeLibSeedhartaImpl(
         }
 
         val gameData = uri.readFileContents(context) ?: return
-        if (!QSPOpenSavedGameFromData(gameData, true)) {
+        if (!openSavedGameFromData(gameData, true)) {
             showLastQspError()
         }
     }
@@ -288,16 +288,16 @@ class NativeLibSeedhartaImpl(
 
         uri.writeFileContents(
             context = context,
-            dataToWrite = QSPSaveGameAsData(false) ?: return
+            dataToWrite = saveGameAsData(false) ?: return
         )
     }
 
     override fun onActionClicked(index: Int) {
         runOnQspThread {
-            if (!QSPSetSelActionIndex(index, false)) {
+            if (!setSelActionIndex(index, false)) {
                 showLastQspError()
             }
-            if (!QSPExecuteSelActionCode(true)) {
+            if (!executeSelActionCode(true)) {
                 showLastQspError()
             }
         }
@@ -305,7 +305,7 @@ class NativeLibSeedhartaImpl(
 
     override fun onObjectSelected(index: Int) {
         runOnQspThread {
-            if (!QSPSetSelObjectIndex(index, true)) {
+            if (!setSelObjectIndex(index, true)) {
                 showLastQspError()
             }
         }
@@ -313,8 +313,8 @@ class NativeLibSeedhartaImpl(
 
     override fun onInputAreaClicked(code: String) {
         runOnQspThread {
-            QSPSetInputStrText(code)
-            if (!QSPExecUserInput(true)) {
+            setInputStrText(code)
+            if (!execUserInput(true)) {
                 showLastQspError()
             }
         }
@@ -322,7 +322,7 @@ class NativeLibSeedhartaImpl(
 
     override fun onUseExecutorString(code: String) {
         runOnQspThread {
-            if (!QSPExecString(code, true)) {
+            if (!execString(code, true)) {
                 showLastQspError()
             }
         }
@@ -330,7 +330,7 @@ class NativeLibSeedhartaImpl(
 
     override fun execute(code: String?) {
         runOnQspThread {
-            if (!QSPExecString(code, true)) {
+            if (!execString(code, true)) {
                 showLastQspError()
             }
         }
@@ -339,20 +339,24 @@ class NativeLibSeedhartaImpl(
     override fun executeCounter() {
         if (libLock.isLocked) return
         runOnQspThread {
-            if (!QSPExecCounter(true)) {
+            if (!execCounter(true)) {
                 showLastQspError()
             }
         }
     }
 
+    override fun callDebug(str: String?) {
+
+    }
+
     // endregion LibQpProxy
     // region LibQpCallbacks
-    override fun RefreshInt() {
+    override fun refreshInt() {
         loadUIConfiguration()
 
         gameState = gameState.copy(
-            mainDesc = QSPGetMainDesc() ?: "",
-            varsDesc = QSPGetVarsDesc() ?: "",
+            mainDesc = getMainDesc() ?: "",
+            varsDesc = getVarsDesc() ?: "",
             actionsList = actionsList,
             objectsList = objectsList
         )
@@ -362,33 +366,30 @@ class NativeLibSeedhartaImpl(
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun ShowPicture(path: String?) {
+    override fun onShowImage(path: String?) {
         if (!path.isNullOrBlank()) {
             gameInterface.showLibDialog(LibTypeDialog.DIALOG_PICTURE, path)
         }
     }
 
-    override fun SetTimer(msecs: Int) {
+    override fun onSetTimer(msecs: Int) {
         gameInterface.setCountInter(msecs.toLong())
     }
 
-    override fun ShowMessage(message: String?) {
+    override fun onShowMessage(message: String?) {
         gameInterface.showLibDialog(
             dialogType = LibTypeDialog.DIALOG_MESSAGE,
             inputString = message ?: ""
         )
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun PlayFile(path: String?, volume: Int) {
+    override fun onPlayFile(path: String?, volume: Int) {
         if (!path.isNullOrBlank()) {
             gameInterface.playFile(path, volume)
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun IsPlayingFile(path: String?): Boolean {
+    override fun onIsPlayingFile(path: String?): Boolean {
         if (path.isNullOrBlank()) {
             return false
         } else {
@@ -397,8 +398,7 @@ class NativeLibSeedhartaImpl(
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun CloseFile(path: String?) {
+    override fun onCloseFile(path: String?) {
         if (path.isNullOrBlank()) {
             gameInterface.closeAllFiles()
         } else {
@@ -406,8 +406,7 @@ class NativeLibSeedhartaImpl(
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun OpenGame(filename: String?) {
+    override fun onOpenGame(filename: String?) {
         if (filename.isNullOrBlank()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_LOAD)
         } else {
@@ -433,8 +432,7 @@ class NativeLibSeedhartaImpl(
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun SaveGame(filename: String?) {
+    override fun onSaveGameStatus(filename: String?) {
         if (filename.isNullOrBlank()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_SAVE)
         } else {
@@ -457,7 +455,7 @@ class NativeLibSeedhartaImpl(
         }
     }
 
-    override fun InputBox(prompt: String?): String {
+    override fun onInputBox(prompt: String?): String {
         gameInterface.showLibDialog(
             dialogType = LibTypeDialog.DIALOG_INPUT,
             inputString = prompt ?: ""
@@ -465,7 +463,7 @@ class NativeLibSeedhartaImpl(
         return runCatching { runBlocking { returnValueFlow.first() }.dialogTextValue }.getOrElse { "" }
     }
 
-    override fun GetMSCount(): Int {
+    override fun onGetMsCount(): Int {
         val now = SystemClock.elapsedRealtime()
         if (lastMsCountCallTime == 0L) {
             lastMsCountCallTime = gameStartTime
@@ -475,11 +473,11 @@ class NativeLibSeedhartaImpl(
         return dt
     }
 
-    override fun AddMenuItem(name: String?, imgPath: String?) {
+    override fun onAddMenuItem(name: String?, imgPath: String?) {
         mutableMenuItemList.add(LibGenItem(name ?: "", imgPath ?: ""))
     }
 
-    override fun ShowMenu() {
+    override fun onShowMenu() {
         gameInterface.showLibDialog(
             LibTypeDialog.DIALOG_MENU,
             menuItems = mutableMenuItemList
@@ -487,15 +485,11 @@ class NativeLibSeedhartaImpl(
         val dialogValue =
             runCatching { runBlocking { returnValueFlow.first() }.dialogNumValue }.getOrElse { -1 }
         if (dialogValue != -1) {
-            QSPSelectMenuItem(dialogValue)
+            selectMenuItem(dialogValue)
         }
     }
 
-    override fun DeleteMenu() {
-        // do nothing
-    }
-
-    override fun Wait(msecs: Int) {
+    override fun onSleep(msecs: Int) {
         runCatching {
             Thread.sleep(msecs.toLong())
         }.onFailure { ex ->
@@ -506,12 +500,11 @@ class NativeLibSeedhartaImpl(
         }
     }
 
-    override fun ShowWindow(type: Int, isShow: Boolean) {
+    override fun onShowWindow(type: Int, isShow: Boolean) {
         gameInterface.changeVisWindow(LibTypeWindow.entries[type], isShow)
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun GetFileContents(path: String?): ByteArray? {
+    override fun onGetFileContents(path: String?): ByteArray? {
         if (path.isNullOrBlank()) return byteArrayOf()
         gameInterface.requestReceiveFile(path)
         val targetFileUri =
@@ -520,8 +513,7 @@ class NativeLibSeedhartaImpl(
         return targetFileUri.readFileContents(context)
     }
 
-    @OptIn(ExperimentalContracts::class)
-    override fun ChangeQuestPath(path: String?) {
+    override fun onChangeQuestPath(path: String?) {
         if (!path.isNullOrBlank()) {
             gameInterface.changeGameDir(path)
         }

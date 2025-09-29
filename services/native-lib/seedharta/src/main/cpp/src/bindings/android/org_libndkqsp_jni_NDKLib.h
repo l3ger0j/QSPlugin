@@ -12,7 +12,7 @@ extern "C" {
  * Method:    QSPInit
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_QSPInit
+JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_init
   (JNIEnv *, jobject);
 
 /*
@@ -20,7 +20,7 @@ JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_QSPInit
  * Method:    QSPDeInit
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_QSPDeInit
+JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_terminate
   (JNIEnv *, jobject);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPIsInCallBack
  * Method:    QSPEnableDebugMode
  * Signature: (Z)V
  */
-JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_QSPEnableDebugMode
+JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_enableDebugMode
   (JNIEnv *, jobject, jboolean);
 
 /*
@@ -44,7 +44,7 @@ JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_QSPEnableDebugMode
  * Method:    QSPGetCurStateData
  * Signature: ()Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetCurStateData
+JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_getCurStateData
   (JNIEnv *, jobject);
 
 /*
@@ -52,7 +52,7 @@ JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetCurStateData
  * Method:    QSPGetVersion
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVersion
+JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_getVersion
   (JNIEnv *, jobject);
 
 /*
@@ -60,7 +60,7 @@ JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVersion
  * Method:    QSPGetCompiledDateTime
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetCompiledDateTime
+JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_getCompiledDateTime
   (JNIEnv *, jobject);
 
 /*
@@ -68,7 +68,7 @@ JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetCompiledDateTime
  * Method:    QSPGetFullRefreshCount
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetFullRefreshCount
+JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_getFullRefreshCount
   (JNIEnv *, jobject);
 
 /*
@@ -76,7 +76,7 @@ JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetFullRefreshCount
  * Method:    QSPGetQstFullPath
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetQstFullPath
+JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_getQstFullPath
   (JNIEnv *, jobject);
 
 /*
@@ -84,7 +84,7 @@ JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetQstFullPath
  * Method:    QSPGetCurLoc
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetCurLoc
+JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_getCurLoc
   (JNIEnv *, jobject);
 
 /*
@@ -92,7 +92,7 @@ JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetCurLoc
  * Method:    QSPGetExprValue
  * Signature: ()Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetExprValue
+JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_getExprValue
   (JNIEnv *, jobject);
 
 /*
@@ -100,7 +100,7 @@ JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetExprValue
  * Method:    QSPGetMainDesc
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetMainDesc
+JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_getMainDesc
   (JNIEnv *, jobject);
 
 /*
@@ -108,7 +108,7 @@ JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetMainDesc
  * Method:    QSPIsMainDescChanged
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPIsMainDescChanged
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_isMainDescChanged
   (JNIEnv *, jobject);
 
 /*
@@ -116,7 +116,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPIsMainDescChanged
  * Method:    QSPGetVarsDesc
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarsDesc
+JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_getVarsDesc
   (JNIEnv *, jobject);
 
 /*
@@ -124,7 +124,7 @@ JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarsDesc
  * Method:    QSPIsVarsDescChanged
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPIsVarsDescChanged
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_isVarsDescChanged
   (JNIEnv *, jobject);
 
 /*
@@ -132,7 +132,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPIsVarsDescChanged
  * Method:    QSPGetVarValuesCount
  * Signature: (Ljava/lang/String;)Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarValuesCount
+JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_getVarValuesCount
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -140,7 +140,7 @@ JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarValuesCount
  * Method:    QSPGetVarValues
  * Signature: (Ljava/lang/String;I)Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarValues
+JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_getVarValues
   (JNIEnv *, jobject, jstring, jint);
 
 /*
@@ -148,7 +148,7 @@ JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarValues
  * Method:    QSPGetMaxVarsCount
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetMaxVarsCount
+JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_getMaxVarsCount
   (JNIEnv *, jobject);
 
 /*
@@ -156,7 +156,7 @@ JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetMaxVarsCount
  * Method:    QSPGetVarNameByIndex
  * Signature: (I)Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarNameByIndex
+JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_getVarNameByIndex
   (JNIEnv *, jobject, jint);
 
 /*
@@ -164,7 +164,7 @@ JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetVarNameByIndex
  * Method:    QSPSetInputStrText
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_QSPSetInputStrText
+JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_setInputStrText
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -180,7 +180,7 @@ JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetActionsCount
  * Method:    QSPGetActionData
  * Signature: ()Ljava/lang/Object;
  */
-JNIEXPORT jobjectArray JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetActionData
+JNIEXPORT jobjectArray JNICALL Java_org_libndkqsp_jni_NDKLib_getActionData
   (JNIEnv *, jobject);
 
 /*
@@ -188,7 +188,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetActionData
  * Method:    QSPExecuteSelActionCode
  * Signature: (Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecuteSelActionCode
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_executeSelActionCode
   (JNIEnv *, jobject, jboolean);
 
 /*
@@ -196,7 +196,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecuteSelActionCode
  * Method:    QSPSetSelActionIndex
  * Signature: (IZ)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPSetSelActionIndex
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_setSelActionIndex
   (JNIEnv *, jobject, jint, jboolean);
 
 /*
@@ -220,7 +220,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPIsActionsChanged
  * Method:    QSPGetObjectData
  * Signature: ()Ljava/lang/Object;
  */
-JNIEXPORT jobjectArray JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetObjectData
+JNIEXPORT jobjectArray JNICALL Java_org_libndkqsp_jni_NDKLib_getObjectData
   (JNIEnv *, jobject);
 
 /*
@@ -236,7 +236,7 @@ JNIEXPORT jint JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetObjectsCount
  * Method:    QSPSetSelObjectIndex
  * Signature: (IZ)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPSetSelObjectIndex
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_setSelObjectIndex
   (JNIEnv *, jobject, jint, jboolean);
 
 /*
@@ -260,7 +260,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPIsObjectsChanged
  * Method:    QSPExecString
  * Signature: (Ljava/lang/String;Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecString
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_execString
   (JNIEnv *, jobject, jstring, jboolean);
 
 /*
@@ -276,7 +276,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecLocationCode
  * Method:    QSPExecCounter
  * Signature: (Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecCounter
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_execCounter
   (JNIEnv *, jobject, jboolean);
 
 /*
@@ -284,7 +284,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecCounter
  * Method:    QSPExecUserInput
  * Signature: (Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecUserInput
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_execUserInput
   (JNIEnv *, jobject, jboolean);
 
 /*
@@ -292,7 +292,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPExecUserInput
  * Method:    QSPGetLastErrorData
  * Signature: ()Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetLastErrorData
+JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_getLastErrorData
   (JNIEnv *, jobject);
 
 /*
@@ -300,39 +300,23 @@ JNIEXPORT jobject JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetLastErrorData
  * Method:    QSPGetErrorDesc
  * Signature: (I)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_QSPGetErrorDesc
+JNIEXPORT jstring JNICALL Java_org_libndkqsp_jni_NDKLib_getErrorDesc
   (JNIEnv *, jobject, jint);
-
-/*
- * Class:     org_libndkqsp_jni_NDKLib
- * Method:    QSPLoadGameWorld
- * Signature: (Ljava/lang/String;)Z
- */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPLoadGameWorld
-  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_libndkqsp_jni_NDKLib
  * Method:    QSPLoadGameWorldFromData
  * Signature: ([BLjava/lang/String;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPLoadGameWorldFromData
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_loadGameWorldFromData
   (JNIEnv *, jobject, jbyteArray, jstring);
-
-/*
- * Class:     org_libndkqsp_jni_NDKLib
- * Method:    QSPSaveGame
- * Signature: (Ljava/lang/String;Z)Z
- */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPSaveGame
-  (JNIEnv *, jobject, jstring, jboolean);
 
 /*
  * Class:     org_libndkqsp_jni_NDKLib
  * Method:    QSPSaveGameAsData
  * Signature: (Z)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_org_libndkqsp_jni_NDKLib_QSPSaveGameAsData
+JNIEXPORT jbyteArray JNICALL Java_org_libndkqsp_jni_NDKLib_saveGameAsData__Z
   (JNIEnv *, jobject, jboolean);
 
 /*
@@ -348,7 +332,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPOpenSavedGame
  * Method:    QSPOpenSavedGameFromData
  * Signature: ([BZ)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPOpenSavedGameFromData
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_openSavedGameFromData
   (JNIEnv *, jobject, jbyteArray, jboolean);
 
 /*
@@ -356,7 +340,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPOpenSavedGameFromDat
  * Method:    QSPRestartGame
  * Signature: (Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPRestartGame
+JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_restartGame
   (JNIEnv *, jobject, jboolean);
 
 /*
@@ -364,7 +348,7 @@ JNIEXPORT jboolean JNICALL Java_org_libndkqsp_jni_NDKLib_QSPRestartGame
  * Method:    QSPSelectMenuItem
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_QSPSelectMenuItem
+JNIEXPORT void JNICALL Java_org_libndkqsp_jni_NDKLib_selectMenuItem
   (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
