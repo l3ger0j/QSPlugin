@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.DocumentFileCompat.doesExist
 import com.anggrayudi.storage.file.DocumentFileCompat.fromFullPath
@@ -18,9 +19,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.qp.audio.AudioPlayerService
@@ -64,8 +67,10 @@ class SupervisorService(
 
     private var gameDirUri: Uri = Uri.EMPTY
 
-    override val gameStateFlow: MutableStateFlow<LibGameState> = MutableStateFlow(LibGameState())
-    override val gameUIConfFlow: MutableStateFlow<LibUIConfig> = MutableStateFlow(LibUIConfig())
+    private val _gameStateFlow: MutableStateFlow<LibGameState> = MutableStateFlow(LibGameState())
+    val gameStateFlow = _gameStateFlow.asStateFlow()
+    private val _gameUIConfFlow: MutableStateFlow<LibUIConfig> = MutableStateFlow(LibUIConfig())
+    val gameUIConfFlow = _gameUIConfFlow.asStateFlow()
 
     private val _gameDialogFlow: MutableSharedFlow<Triple<LibTypeDialog, String, List<LibGenItem>>> = MutableSharedFlow()
     private val _gamePopupFlow: MutableSharedFlow<LibTypePopup> = MutableSharedFlow()
@@ -73,7 +78,6 @@ class SupervisorService(
     val gameDialogFlow: SharedFlow<Triple<LibTypeDialog, String, List<LibGenItem>>> = _gameDialogFlow
     val gamePopupFlow: SharedFlow<LibTypePopup> = _gamePopupFlow
     val gameElementVis: SharedFlow<Pair<LibTypeWindow, Boolean>> = _gameElementVis
-    val returnDialogFlow: MutableSharedFlow<LibReturnValue> = libNativeByte.returnValueFlow
 
     @Volatile private var counterInterval = 500L
     private val counterNativeByteTask: suspend CoroutineScope.() -> Unit = {
@@ -93,6 +97,18 @@ class SupervisorService(
             libNativeSeedharta.executeCounter()
             delay(counterInterval)
         }
+    }
+
+    override fun setGameState(gameState: LibGameState) {
+        _gameStateFlow.value = gameState
+    }
+
+    override fun setUIConfig(uiConfig: LibUIConfig) {
+        _gameUIConfFlow.value = uiConfig
+    }
+
+    fun putReturnValue(returnValue: LibReturnValue) {
+        libNativeByte.returnValueQueue.offer(returnValue)
     }
 
     fun startService(
@@ -235,31 +251,17 @@ class SupervisorService(
         val gameDir = gameDirUri.toDocumentFile(context)
         if (!gameDir.isWritableDir(context)) return
 
-        CompletableFuture
-            .supplyAsync { doesExist(context, filePath) }
-            .thenApplyAsync {
-                if (it) {
-                    return@thenApplyAsync fromFullPath(context, filePath)
-                } else {
-                    return@thenApplyAsync gameDir.child(context, filePath)
-                }
-            }
-            .thenApplyAsync {
-                return@thenApplyAsync if (it.isWritableFile(context)) {
-                    it.uri
-                } else {
-                    Uri.EMPTY
-                }
-            }
-            .thenAcceptAsync {
-                supervisorServiceScope.launch {
-                    libNativeByte.returnValueFlow.emit(LibReturnValue(fileUri = it))
-                }
-            }
-            .exceptionally {
-                Log.e(javaClass.simpleName, "requestReceiveFile: ERROR!", it)
-                null
-            }
+        val docFile = if (doesExist(context, filePath)) {
+            fromFullPath(context, filePath)
+        } else {
+            gameDir.child(context, filePath)
+        }
+
+        if (docFile.isWritableFile(context)) {
+            putReturnValue(LibReturnValue(fileUri = docFile.uri))
+        } else {
+            Log.e(javaClass.simpleName, "requestReceiveFile: ERROR!")
+        }
     }
 
     @OptIn(ExperimentalContracts::class)
@@ -267,27 +269,17 @@ class SupervisorService(
         val gameDir = gameDirUri.toDocumentFile(context)
         if (!gameDir.isWritableDir(context)) return
 
-        CompletableFuture
-            .supplyAsync {
+        viewModelScope.launch {
+            val docFile = withContext(Dispatchers.IO) {
                 gameDir.makeFile(context, path, mimeType)
             }
-            .thenApplyAsync {
-                if (it.isWritableFile(context)) {
-                    return@thenApplyAsync it.uri
-                } else {
-                    return@thenApplyAsync Uri.EMPTY
-                }
+
+            if (docFile.isWritableFile(context)) {
+                putReturnValue(LibReturnValue(fileUri = docFile.uri))
+            } else {
+                Log.e(javaClass.simpleName, "requestCreateFile: ERROR!")
             }
-            .thenAcceptAsync {
-                if (it == Uri.EMPTY) return@thenAcceptAsync
-                supervisorServiceScope.launch {
-                    libNativeByte.returnValueFlow.emit(LibReturnValue(fileUri = it))
-                }
-            }
-            .exceptionally {
-                Log.e(javaClass.simpleName, "requestReceiveFile: ERROR!", it)
-                null
-            }
+        }
     }
 
     @OptIn(ExperimentalContracts::class)
@@ -295,33 +287,21 @@ class SupervisorService(
         val gameDir = gameDirUri.toDocumentFile(context)
         if (!gameDir.isWritableDir(context)) return
 
-        val normPath = filePath.normalizeContentPath()
-        CompletableFuture
-            .supplyAsync { gameDir.child(context, normPath) }
-            .thenApplyAsync {
-                if (it.isWritableFile(context)) {
-                    return@thenApplyAsync it.uri
-                } else {
-                    val errorMsg = "Sound file by path: $filePath not writable"
-                    throw CompletionException(RuntimeException(errorMsg))
-                }
-            }
-            .exceptionally {
-                Log.e(javaClass.simpleName, "isPlayingFile: ERROR!", it)
-                Uri.EMPTY
-            }
-            .thenApply { fileUri -> audioPlayer.isPlayingFile(fileUri) }
-            .thenAcceptAsync {
-                if (it != null) {
-                    supervisorServiceScope.launch {
-                        libNativeByte.returnValueFlow.emit(LibReturnValue(playFileState = true))
-                    }
-                }
-            }
-            .exceptionally {
-                Log.e(javaClass.simpleName, "isPlayingFile: ERROR!", it)
-                null
-            }
+        val docFile = gameDir.child(
+            context = context,
+            path = filePath.normalizeContentPath()
+        )
+
+        if (docFile.isWritableFile(context)) {
+            putReturnValue(
+                LibReturnValue(
+                    playFileState = audioPlayer.isPlayingFile(docFile.uri)
+                )
+            )
+        } else {
+            val errorMsg = RuntimeException("Sound file by path: $filePath not writable")
+            Log.e(javaClass.simpleName, "isPlayingFile: ERROR!", errorMsg)
+        }
     }
 
     override fun closeAllFiles() {

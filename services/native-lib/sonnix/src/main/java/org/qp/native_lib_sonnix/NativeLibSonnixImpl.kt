@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalContracts::class)
+
 package org.qp.native_lib_sonnix
 
 import android.content.Context
@@ -11,13 +13,6 @@ import com.anggrayudi.storage.file.DocumentFileCompat.fromUri
 import com.anggrayudi.storage.file.MimeType
 import com.anggrayudi.storage.file.child
 import com.anggrayudi.storage.file.getAbsolutePath
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.libsnxqsp.jni.SNXLib
 import org.qp.dto.GameInterface
 import org.qp.dto.LibGameState
@@ -27,9 +22,10 @@ import org.qp.dto.LibReturnValue
 import org.qp.dto.LibTypeDialog
 import org.qp.dto.LibTypePopup
 import org.qp.dto.LibTypeWindow
-import org.qp.utils.FileUtil.readFileContents
+import org.qp.dto.LibUIConfig
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
+import org.qp.utils.FileUtil.readFileContents
 import org.qp.utils.FileUtil.writeFileContents
 import org.qp.utils.HtmlUtil.getSrcDir
 import org.qp.utils.HtmlUtil.isContainsHtmlTags
@@ -37,7 +33,7 @@ import org.qp.utils.PathUtil.getFilename
 import org.qp.utils.PathUtil.normalizeContentPath
 import org.qp.utils.ThreadUtil.isSameThread
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.thread
@@ -48,14 +44,11 @@ class NativeLibSonnixImpl(
     private val context: Context,
     override var gameInterface: GameInterface,
     override var gameState: LibGameState = LibGameState(),
-    override val returnValueFlow: MutableSharedFlow<LibReturnValue> = MutableSharedFlow(),
+    override val returnValueQueue: ArrayBlockingQueue<LibReturnValue> = ArrayBlockingQueue(1)
 ) : SNXLib(), LibIProxy {
 
     private val libLock = ReentrantLock()
     private var libThread: Thread? = null
-    private var libUIFlowJob: Job? = null
-    private var libStateFlowJob: Job? = null
-    private val libScope = CoroutineScope(Dispatchers.Default)
     private val libQueue: ArrayBlockingQueue<Runnable> = ArrayBlockingQueue(1)
     @Volatile private lateinit var libHandler: Handler
     @Volatile private var libThreadInit = false
@@ -65,6 +58,10 @@ class NativeLibSonnixImpl(
         get() = fromUri(context, gameState.gameDirUri)
 
     private val mutableMenuItemList: MutableList<LibGenItem> = mutableListOf()
+
+    private inline fun executeQspCommand(block: () -> Boolean): Boolean {
+        return if (block()) { true } else { showLastQspError(); false }
+    }
 
     private fun runOnQspThread(runnable: Runnable) {
         if (libThreadInit) {
@@ -81,13 +78,7 @@ class NativeLibSonnixImpl(
         val gameFile = gameFileUri.toDocumentFile(context) ?: return false
         val gameFileFullPath = gameFile.getAbsolutePath(context)
         val gameData = gameFileUri.readFileContents(context) ?: return false
-
-        if (!loadGameWorldFromData(gameData, gameFileFullPath)) {
-            showLastQspError()
-            return false
-        }
-
-        return true
+        return executeQspCommand { loadGameWorldFromData(gameData, gameFileFullPath) }
     }
 
     private fun showLastQspError() {
@@ -117,23 +108,17 @@ class NativeLibSonnixImpl(
         val fColorResult = getVarValues("FCOLOR", 0)
         val lColorResult = getVarValues("LCOLOR", 0)
 
-        val useHtml = htmlResult.intValue != 0
-        val oldConfig = gameInterface.gameUIConfFlow.value
-
-        libUIFlowJob = libScope.launch {
-            gameInterface.gameUIConfFlow.emit(
-                oldConfig.copy(
-                    useHtml = if (htmlResult.isSuccess) useHtml else oldConfig.useHtml,
-                    fontSize = if (fSizeResult.isSuccess) fSizeResult.intValue else oldConfig.fontSize,
-                    backColor = if (bColorResult.isSuccess) bColorResult.intValue else oldConfig.backColor,
-                    fontColor = if (fColorResult.isSuccess) fColorResult.intValue else oldConfig.fontColor,
-                    linkColor = if (lColorResult.isSuccess) lColorResult.intValue else oldConfig.linkColor
-                )
+        gameInterface.setUIConfig(
+            LibUIConfig(
+                useHtml = htmlResult.intValue != 0,
+                fontSize = fSizeResult.intValue,
+                backColor = bColorResult.intValue,
+                fontColor = fColorResult.intValue,
+                linkColor = lColorResult.intValue
             )
-        }
+        )
     }
 
-    @OptIn(ExperimentalContracts::class)
     private val actionsList: List<LibGenItem>
         get() {
             val gameDir = currGameDir
@@ -159,7 +144,6 @@ class NativeLibSonnixImpl(
             return actions
         }
 
-    @OptIn(ExperimentalContracts::class)
     private val objectsList: List<LibGenItem>
         get() {
             val gameDir = currGameDir
@@ -214,9 +198,6 @@ class NativeLibSonnixImpl(
             libThreadInit = false
         }
 
-        libStateFlowJob?.cancel()
-        libUIFlowJob?.cancel()
-
         libThread?.interrupt()
     }
 
@@ -257,9 +238,7 @@ class NativeLibSonnixImpl(
             if (!loadGameWorld()) return@doWithCounterDisabled
             gameStartTime = SystemClock.elapsedRealtime()
             lastMsCountCallTime = 0
-            if (!restartGame(true)) {
-                showLastQspError()
-            }
+            executeQspCommand { restartGame(true) }
         }
     }
 
@@ -270,9 +249,7 @@ class NativeLibSonnixImpl(
         }
 
         val gameData = uri.readFileContents(context) ?: return
-        if (!openSavedGameFromData(gameData, true)) {
-            showLastQspError()
-        }
+        executeQspCommand { openSavedGameFromData(gameData, true) }
     }
 
     override fun saveGameState(uri: Uri) {
@@ -289,55 +266,33 @@ class NativeLibSonnixImpl(
 
     override fun onActionClicked(index: Int) {
         runOnQspThread {
-            if (!setSelActionIndex(index, false)) {
-                showLastQspError()
-            }
-            if (!executeSelActionCode(true)) {
-                showLastQspError()
-            }
+            executeQspCommand { setSelActionIndex(index, false) }
+            executeQspCommand { executeSelActionCode(true) }
         }
     }
 
     override fun onObjectSelected(index: Int) {
-        runOnQspThread {
-            if (!setSelObjectIndex(index, true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { setSelObjectIndex(index, true) } }
     }
 
     override fun onInputAreaClicked(code: String) {
         runOnQspThread {
             setInputStrText(code)
-            if (!execUserInput(true)) {
-                showLastQspError()
-            }
+            executeQspCommand { execUserInput(true) }
         }
     }
 
     override fun onUseExecutorString(code: String) {
-        runOnQspThread {
-            if (!execString(code, true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { execString(code, true) } }
     }
 
     override fun execute(code: String?) {
-        runOnQspThread {
-            if (!execString(code, true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { execString(code, true) } }
     }
 
     override fun executeCounter() {
         if (libLock.isLocked) return
-        runOnQspThread {
-            if (!execCounter(true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { execCounter(true) } }
     }
 
     override fun onRefreshInt() {
@@ -350,9 +305,7 @@ class NativeLibSonnixImpl(
             objectsList = objectsList
         )
 
-        libStateFlowJob = libScope.launch {
-            gameInterface.gameStateFlow.emit(gameState)
-        }
+        gameInterface.setGameState(gameState)
     }
 
     override fun onShowImage(path: String?) {
@@ -384,14 +337,13 @@ class NativeLibSonnixImpl(
         } else {
             gameInterface.isPlayingFile(path)
             return try {
-                runBlocking { returnValueFlow.first() }.playFileState
-            } catch (_: Exception) {
+                returnValueQueue.poll(30, TimeUnit.SECONDS)?.playFileState ?: false
+            } catch (_: InterruptedException) {
                 false
             }
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onCloseFile(path: String?) {
         if (path.isNullOrBlank()) {
             gameInterface.closeAllFiles()
@@ -400,62 +352,52 @@ class NativeLibSonnixImpl(
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onOpenGame(filename: String?) {
         if (filename.isNullOrBlank()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_LOAD)
         } else {
-            CompletableFuture
-                .supplyAsync {
-                    gameInterface.requestReceiveFile(filename)
-                    runBlocking { returnValueFlow.first() }.fileUri
+            gameInterface.requestReceiveFile(filename)
+            try {
+                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
+                if (fileUri != Uri.EMPTY) {
+                    gameInterface.doWithCounterDisabled { loadGameState(fileUri) }
+                } else {
+                    gameInterface.showLibDialog(
+                        LibTypeDialog.DIALOG_ERROR,
+                        "Save file not found"
+                    )
                 }
-                .thenAccept {
-                    if (it != null && it != Uri.EMPTY) {
-                        gameInterface.doWithCounterDisabled { loadGameState(it) }
-                    } else {
-                        gameInterface.showLibDialog(
-                            LibTypeDialog.DIALOG_ERROR,
-                            "Save file not found"
-                        )
-                    }
-                }
-                .exceptionally {
-                    gameInterface.showLibDialog(LibTypeDialog.DIALOG_ERROR, it.toString())
-                    null
-                }
+            } catch (_: InterruptedException) {
+            }
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onSaveGame(filename: String?) {
         if (filename.isNullOrBlank()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_SAVE)
         } else {
-            CompletableFuture
-                .supplyAsync {
-                    gameInterface.requestCreateFile(filename, MimeType.BINARY_FILE)
-                    runBlocking { returnValueFlow.first() }.fileUri
+            gameInterface.requestCreateFile(filename, MimeType.BINARY_FILE)
+            try {
+                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
+                if (fileUri != Uri.EMPTY) {
+                    saveGameState(fileUri)
+                } else {
+                    gameInterface.showLibDialog(
+                        LibTypeDialog.DIALOG_ERROR,
+                        "Error access dir"
+                    )
                 }
-                .thenAccept {
-                    if (it != null && it != Uri.EMPTY) {
-                        saveGameState(it)
-                    } else {
-                        gameInterface.showLibDialog(LibTypeDialog.DIALOG_ERROR, "Error access dir")
-                    }
-                }
-                .exceptionally {
-                    gameInterface.showLibDialog(LibTypeDialog.DIALOG_ERROR, it.toString())
-                    null
-                }
+            } catch (_: InterruptedException) {
+            }
         }
     }
 
     override fun onInputBox(prompt: String?): String {
         gameInterface.showLibDialog(LibTypeDialog.DIALOG_INPUT, prompt ?: "")
+
         return try {
-            runBlocking { returnValueFlow.first() }.dialogTextValue
-        } catch (_: Exception) {
+            returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogTextValue ?: ""
+        } catch (_: InterruptedException) {
             ""
         }
     }
@@ -479,9 +421,10 @@ class NativeLibSonnixImpl(
             LibTypeDialog.DIALOG_MENU,
             menuItems = mutableMenuItemList
         )
+
         return try {
-            runBlocking { returnValueFlow.first() }.dialogNumValue
-        } catch (_: Exception) {
+            returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogNumValue ?: -1
+        } catch (_: InterruptedException) {
             super.onShowMenu()
         }
     }

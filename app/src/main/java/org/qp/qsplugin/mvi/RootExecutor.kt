@@ -14,7 +14,11 @@ import org.qp.dto.LibReturnValue
 import org.qp.dto.LibTypeDialog
 import org.qp.dto.LibTypePopup
 import org.qp.dto.LibTypeWindow
-import org.qp.qsplugin.mvi.RootStore.Label.*
+import org.qp.qsplugin.mvi.RootStore.Label.ShowDialogDefault
+import org.qp.qsplugin.mvi.RootStore.Label.ShowDialogMenu
+import org.qp.qsplugin.mvi.RootStore.Label.ShowDialogMessage
+import org.qp.qsplugin.mvi.RootStore.Label.ShowLoadFileActivity
+import org.qp.qsplugin.mvi.RootStore.Label.ShowSaveFileActivity
 import org.qp.qsplugin.mvi.RootStore.Message.UpdateGameStatus
 import org.qp.qsplugin.mvi.RootStore.Message.UpdateStateNestedLoad
 import org.qp.qsplugin.mvi.RootStore.Message.UpdateStateNestedSave
@@ -55,7 +59,10 @@ internal class RootExecutor(
                 publish(ShowSaveFileActivity(
                     Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                         addCategory(Intent.CATEGORY_OPENABLE)
-                        putExtra(Intent.EXTRA_TITLE, "${(UInt.MIN_VALUE..UInt.MAX_VALUE).random()}.sav")
+                        putExtra(
+                            Intent.EXTRA_TITLE,
+                            "${(UInt.MIN_VALUE..UInt.MAX_VALUE).random()}.sav"
+                        )
                         setType(BINARY_FILE)
                     }
                 ))
@@ -80,19 +87,15 @@ internal class RootExecutor(
             }
 
             is RootStore.Intent.OnSelectMenuItem -> {
-                outScope.launch {
-                    service.returnDialogFlow.emit(
-                        LibReturnValue(dialogNumValue = intent.index)
-                    )
-                }
+                service.putReturnValue(
+                    LibReturnValue(dialogNumValue = intent.index)
+                )
             }
 
             is RootStore.Intent.OnEnterValue -> {
-                outScope.launch {
-                    service.returnDialogFlow.emit(
-                        LibReturnValue(dialogTextValue = intent.inputString)
-                    )
-                }
+                service.putReturnValue(
+                    LibReturnValue(dialogTextValue = intent.inputString)
+                )
             }
 
             is RootStore.Intent.StartGameDialogFlow -> {
@@ -166,7 +169,6 @@ internal class RootExecutor(
                                             setType(BINARY_FILE)
                                         }
                                     ))
-//                                    dispatch(UpdateStateNestedSave(true))
                                 }
                             }
 
@@ -179,7 +181,6 @@ internal class RootExecutor(
                                             setType(BINARY_FILE)
                                         }
                                     ))
-//                                    dispatch(UpdateStateNestedLoad(true))
                                 }
                             }
                         }

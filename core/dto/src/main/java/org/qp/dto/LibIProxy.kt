@@ -1,7 +1,7 @@
 package org.qp.dto
 
 import android.net.Uri
-import kotlinx.coroutines.flow.MutableSharedFlow
+import java.util.concurrent.ArrayBlockingQueue
 
 interface LibIProxy {
     /**
@@ -34,5 +34,5 @@ interface LibIProxy {
     fun executeCounter()
     val gameState: LibGameState
     val gameInterface: GameInterface
-    val returnValueFlow: MutableSharedFlow<LibReturnValue>
+    val returnValueQueue: ArrayBlockingQueue<LibReturnValue>
 }

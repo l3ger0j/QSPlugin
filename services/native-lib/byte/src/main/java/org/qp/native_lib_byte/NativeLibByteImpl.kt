@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalContracts::class)
+
 package org.qp.native_lib_byte
 
 import android.content.Context
@@ -11,13 +13,6 @@ import com.anggrayudi.storage.file.DocumentFileCompat.fromUri
 import com.anggrayudi.storage.file.MimeType
 import com.anggrayudi.storage.file.child
 import com.libqsp.jni.QSPLib
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.qp.dto.GameInterface
 import org.qp.dto.LibGameState
 import org.qp.dto.LibGenItem
@@ -27,9 +22,9 @@ import org.qp.dto.LibTypeDialog
 import org.qp.dto.LibTypePopup
 import org.qp.dto.LibTypeWindow
 import org.qp.dto.LibUIConfig
-import org.qp.utils.FileUtil.readFileContents
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
+import org.qp.utils.FileUtil.readFileContents
 import org.qp.utils.FileUtil.writeFileContents
 import org.qp.utils.HtmlUtil.getSrcDir
 import org.qp.utils.HtmlUtil.isContainsHtmlTags
@@ -37,8 +32,7 @@ import org.qp.utils.PathUtil.getFilename
 import org.qp.utils.PathUtil.normalizeContentPath
 import org.qp.utils.ThreadUtil.isSameThread
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.thread
@@ -49,14 +43,11 @@ class NativeLibByteImpl(
     private val context: Context,
     override var gameInterface: GameInterface,
     override var gameState: LibGameState = LibGameState(),
-    override val returnValueFlow: MutableSharedFlow<LibReturnValue> = MutableSharedFlow(),
+    override val returnValueQueue: ArrayBlockingQueue<LibReturnValue> = ArrayBlockingQueue(1)
 ) : QSPLib(), LibIProxy {
 
     private val libLock = ReentrantLock()
     private var libThread: Thread? = null
-    private var libUIFlowJob: Job? = null
-    private var libStateFlowJob: Job? = null
-    private val libScope = CoroutineScope(Dispatchers.Default)
     private val libQueue: ArrayBlockingQueue<Runnable> = ArrayBlockingQueue(1)
     @Volatile private lateinit var libHandler: Handler
     @Volatile private var libThreadInit = false
@@ -64,6 +55,10 @@ class NativeLibByteImpl(
     @Volatile private var lastMsCountCallTime: Long = 0L
     private val currGameDir: DocumentFile?
         get() = fromUri(context, gameState.gameDirUri)
+
+    private inline fun executeQspCommand(block: () -> Boolean): Boolean {
+        return if (block()) { true } else { showLastQspError(); false }
+    }
 
     private fun runOnQspThread(runnable: Runnable) {
         if (libThreadInit) {
@@ -78,13 +73,7 @@ class NativeLibByteImpl(
 
     private fun loadGameWorld(): Boolean {
         val gameData = gameState.gameFileUri.readFileContents(context) ?: return false
-
-        if (!loadGameWorldFromData(gameData, true)) {
-            showLastQspError()
-            return false
-        }
-
-        return true
+        return executeQspCommand { loadGameWorldFromData(gameData, true) }
     }
 
     private fun showLastQspError() {
@@ -113,20 +102,17 @@ class NativeLibByteImpl(
         val fColorResult = getNumVarValue("FCOLOR", 0)
         val lColorResult = getNumVarValue("LCOLOR", 0)
 
-        libUIFlowJob = libScope.launch {
-            gameInterface.gameUIConfFlow.emit(
-                LibUIConfig(
-                    useHtml = htmlResult != 0L,
-                    fontSize = fSizeResult.toInt(),
-                    backColor = bColorResult.toInt(),
-                    fontColor = fColorResult.toInt(),
-                    linkColor = lColorResult.toInt()
-                )
+        gameInterface.setUIConfig(
+            LibUIConfig(
+                useHtml = htmlResult != 0L,
+                fontSize = fSizeResult.toInt(),
+                backColor = bColorResult.toInt(),
+                fontColor = fColorResult.toInt(),
+                linkColor = lColorResult.toInt()
             )
-        }
+        )
     }
 
-    @OptIn(ExperimentalContracts::class)
     private val actionsList: List<LibGenItem>
         get() {
             val gameDir = currGameDir
@@ -152,7 +138,6 @@ class NativeLibByteImpl(
             return actions
         }
 
-    @OptIn(ExperimentalContracts::class)
     private val objectsList: List<LibGenItem>
         get() {
             val gameDir = currGameDir
@@ -206,9 +191,6 @@ class NativeLibByteImpl(
             libThreadInit = false
         }
 
-        libStateFlowJob?.cancel()
-        libUIFlowJob?.cancel()
-
         libThread?.interrupt()
     }
 
@@ -249,9 +231,7 @@ class NativeLibByteImpl(
             if (!loadGameWorld()) return@doWithCounterDisabled
             gameStartTime = SystemClock.elapsedRealtime()
             lastMsCountCallTime = 0
-            if (!restartGame(true)) {
-                showLastQspError()
-            }
+            executeQspCommand { restartGame(true) }
         }
     }
 
@@ -262,9 +242,7 @@ class NativeLibByteImpl(
         }
 
         val gameData = uri.readFileContents(context) ?: return
-        if (!openSavedGameFromData(gameData, true)) {
-            showLastQspError()
-        }
+        executeQspCommand { openSavedGameFromData(gameData, true) }
     }
 
     override fun saveGameState(uri: Uri) {
@@ -281,55 +259,33 @@ class NativeLibByteImpl(
 
     override fun onActionClicked(index: Int) {
         runOnQspThread {
-            if (!setSelActIndex(index, false)) {
-                showLastQspError()
-            }
-            if (!execSelAction(true)) {
-                showLastQspError()
-            }
+            executeQspCommand { setSelActIndex(index, false) }
+            executeQspCommand { execSelAction(true) }
         }
     }
 
     override fun onObjectSelected(index: Int) {
-        runOnQspThread {
-            if (!setSelObjIndex(index, true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { setSelObjIndex(index, true) } }
     }
 
     override fun onInputAreaClicked(code: String) {
         runOnQspThread {
             setInputStrText(code)
-            if (!execUserInput(true)) {
-                showLastQspError()
-            }
+            executeQspCommand { execUserInput(true) }
         }
     }
 
     override fun onUseExecutorString(code: String) {
-        runOnQspThread {
-            if (!execString(code, true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { execString(code, true) } }
     }
 
     override fun execute(code: String?) {
-        runOnQspThread {
-            if (!execString(code, true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { execString(code, true) } }
     }
 
     override fun executeCounter() {
         if (libLock.isLocked) return
-        runOnQspThread {
-            if (!execCounter(true)) {
-                showLastQspError()
-            }
-        }
+        runOnQspThread { executeQspCommand { execCounter(true) } }
     }
 
     override fun onRefreshInt(isForced: Boolean, isNewDesc: Boolean) {
@@ -343,13 +299,10 @@ class NativeLibByteImpl(
                 objectsList = objectsList
             )
 
-            libStateFlowJob = libScope.launch {
-                gameInterface.gameStateFlow.emit(gameState)
-            }
+            gameInterface.setGameState(gameState)
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onShowImage(file: String?) {
         if (!file.isNullOrBlank()) {
             gameInterface.showLibDialog(LibTypeDialog.DIALOG_PICTURE, file)
@@ -364,7 +317,6 @@ class NativeLibByteImpl(
         gameInterface.showLibDialog(LibTypeDialog.DIALOG_MESSAGE, text)
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onPlayFile(file: String?, volume: Int) {
         if (!file.isNullOrBlank()) {
             gameInterface.playFile(file, volume)
@@ -377,14 +329,13 @@ class NativeLibByteImpl(
         } else {
             gameInterface.isPlayingFile(file)
             return try {
-                runBlocking { returnValueFlow.first() }.playFileState
-            } catch (_: Exception) {
+                returnValueQueue.poll(30, TimeUnit.SECONDS)?.playFileState ?: false
+            } catch (_: InterruptedException) {
                 false
             }
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onCloseFile(file: String?) {
         if (file.isNullOrBlank()) {
             gameInterface.closeAllFiles()
@@ -393,59 +344,52 @@ class NativeLibByteImpl(
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onOpenGameStatus(file: String?) {
         if (file.isNullOrEmpty()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_LOAD)
         } else {
-            CompletableFuture
-                .supplyAsync {
-                    gameInterface.requestReceiveFile(file)
-                    runBlocking { returnValueFlow.first() }.fileUri
+            gameInterface.requestReceiveFile(file)
+            try {
+                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
+                if (fileUri != Uri.EMPTY) {
+                    gameInterface.doWithCounterDisabled { loadGameState(fileUri) }
+                } else {
+                    gameInterface.showLibDialog(
+                        LibTypeDialog.DIALOG_ERROR,
+                        "Save file not found"
+                    )
                 }
-                .thenAccept {
-                    if (it != null && it != Uri.EMPTY) {
-                        gameInterface.doWithCounterDisabled { loadGameState(it) }
-                    } else {
-                        throw CompletionException(Throwable("Save file not found"))
-                    }
-                }
-                .exceptionally {
-                    gameInterface.showLibDialog(LibTypeDialog.DIALOG_ERROR, it.toString())
-                    null
-                }
+            } catch (_: InterruptedException) {
+            }
         }
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onSaveGameStatus(file: String?) {
         if (file.isNullOrEmpty()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_SAVE)
         } else {
-            CompletableFuture
-                .supplyAsync {
-                    gameInterface.requestCreateFile(file, MimeType.BINARY_FILE)
-                    runBlocking { returnValueFlow.first() }.fileUri
+            gameInterface.requestCreateFile(file, MimeType.BINARY_FILE)
+            try {
+                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
+                if (fileUri != Uri.EMPTY) {
+                    saveGameState(fileUri)
+                } else {
+                    gameInterface.showLibDialog(
+                        LibTypeDialog.DIALOG_ERROR,
+                        "Error access dir"
+                    )
                 }
-                .thenAccept {
-                    if (it != null && it != Uri.EMPTY) {
-                        saveGameState(it)
-                    } else {
-                        gameInterface.showLibDialog(LibTypeDialog.DIALOG_ERROR, "Error access dir")
-                    }
-                }
-                .exceptionally {
-                    gameInterface.showLibDialog(LibTypeDialog.DIALOG_ERROR, it.toString())
-                    null
-                }
+            } catch (_: InterruptedException) {
+            }
         }
     }
 
     override fun onInputBox(text: String): String {
         gameInterface.showLibDialog(LibTypeDialog.DIALOG_INPUT, text)
+
         return try {
-            runBlocking { returnValueFlow.first() }.dialogTextValue
-        } catch (_: Exception) {
+            returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogTextValue ?: ""
+        } catch (_: InterruptedException) {
             ""
         }
     }
@@ -465,9 +409,10 @@ class NativeLibByteImpl(
             LibTypeDialog.DIALOG_MENU,
             menuItems = items.map { LibGenItem(it.name ?: "", it.image ?: "") }
         )
+
         return try {
-            runBlocking { returnValueFlow.first() }.dialogNumValue
-        } catch (_: Exception) {
+            returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogNumValue ?: -1
+        } catch (_: InterruptedException) {
             super.onShowMenu(items)
         }
     }
@@ -484,7 +429,6 @@ class NativeLibByteImpl(
         gameInterface.changeVisWindow(LibTypeWindow.entries[type], toShow)
     }
 
-    @OptIn(ExperimentalContracts::class)
     override fun onOpenGame(file: String?, isNewGame: Boolean) {
         if (!file.isNullOrBlank()) {
             gameInterface.changeGameDir(file)

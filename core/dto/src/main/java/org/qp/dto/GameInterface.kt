@@ -1,7 +1,5 @@
 package org.qp.dto
 
-import kotlinx.coroutines.flow.MutableStateFlow
-
 interface GameInterface {
     fun requestReceiveFile(filePath: String)
     fun requestCreateFile(path: String, mimeType: String)
@@ -29,6 +27,6 @@ interface GameInterface {
      */
     fun doWithCounterDisabled(runnable: Runnable)
 
-    val gameStateFlow: MutableStateFlow<LibGameState>
-    val gameUIConfFlow: MutableStateFlow<LibUIConfig>
+    fun setGameState(gameState: LibGameState)
+    fun setUIConfig(uiConfig: LibUIConfig)
 }
