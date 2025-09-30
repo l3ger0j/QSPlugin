@@ -34,9 +34,7 @@ sealed interface RootComponent {
         gameDirUri: Uri,
         gameFileUri: Uri
     )
-    fun onSaveFile(fileUri: Uri)
     fun doCreateSaveIntent()
-    fun onLoadFile(fileUri: Uri)
     fun doCreateLoadIntent()
     fun restartGame()
 

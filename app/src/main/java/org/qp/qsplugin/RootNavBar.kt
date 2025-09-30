@@ -3,13 +3,12 @@ package org.qp.qsplugin
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Sell
-import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.WorkOutline
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,12 +22,12 @@ fun RootNavBar(
 ) {
     val state by component.model.collectAsState()
 
-    NavigationBar {
+    BottomAppBar {
         NavigationBarItem(
             enabled = state.isExtraEnabled,
             icon = {
                 BadgedBox(
-                    badge = {  }
+                    badge = { }
                 ) {
                     if (activeComponent is RootComponent.Child.ExtraChild) {
                         Icon(Icons.Filled.Sell, contentDescription = "")
@@ -46,7 +45,7 @@ fun RootNavBar(
         NavigationBarItem(
             icon = {
                 BadgedBox(
-                    badge = {  }
+                    badge = { }
                 ) {
                     Icon(Icons.Filled.Menu, contentDescription = "")
                 }
@@ -60,7 +59,7 @@ fun RootNavBar(
             enabled = state.isObjectsEnabled,
             icon = {
                 BadgedBox(
-                    badge = {  }
+                    badge = { }
                 ) {
                     if (activeComponent is RootComponent.Child.ObjectChild) {
                         Icon(Icons.Filled.Work, contentDescription = "")

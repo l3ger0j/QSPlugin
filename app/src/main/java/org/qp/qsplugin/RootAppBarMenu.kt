@@ -26,7 +26,7 @@ fun RootAppBarMenu(
 
     Row {
         Box {
-            IconButton(onClick = { component.doCreateSaveIntent() }) {
+            IconButton(onClick = component::doCreateSaveIntent) {
                 Icon(
                     imageVector = Icons.Default.Download,
                     contentDescription = ""
@@ -46,7 +46,7 @@ fun RootAppBarMenu(
 //            }
         }
         Box {
-            IconButton(onClick = { component.doCreateLoadIntent() }) {
+            IconButton(onClick = component::doCreateLoadIntent) {
                 Icon(
                     imageVector = Icons.Default.Upload,
                     contentDescription = ""

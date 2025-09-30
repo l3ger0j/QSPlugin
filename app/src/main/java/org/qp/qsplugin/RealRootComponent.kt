@@ -62,7 +62,7 @@ import kotlin.contracts.ExperimentalContracts
 
 class RealRootComponent(
     private val componentContext: ComponentContext,
-    private val appContext: Context,
+    private val appContext: Context
 ) : ComponentContext by componentContext, RootComponent, KoinComponent {
 
     private val supervisorService: SupervisorService by inject()
@@ -100,16 +100,16 @@ class RealRootComponent(
             )
         }
 
-    override fun onSaveFile(fileUri: Uri) {
+    fun onSaveFileResult(fileUri: Uri) {
+        store.accept(RootStore.Intent.OnLoadFile(fileUri))
+    }
+
+    fun onLoadFileResult(fileUri: Uri) {
         store.accept(RootStore.Intent.OnSaveFile(fileUri))
     }
 
     override fun doCreateSaveIntent() {
         store.accept(RootStore.Intent.CreateSaveIntent)
-    }
-
-    override fun onLoadFile(fileUri: Uri) {
-        store.accept(RootStore.Intent.OnLoadFile(fileUri))
     }
 
     override fun doCreateLoadIntent() {
@@ -290,7 +290,10 @@ class RealRootComponent(
             val uriScheme = request.url.scheme
             if (uriScheme == null) return super.shouldInterceptRequest(view, request)
             if (!uriScheme.startsWith("file")) return super.shouldInterceptRequest(view, request)
-            if (!rootDir.isWritableDir(appContext)) return super.shouldInterceptRequest(view, request)
+            if (!rootDir.isWritableDir(appContext)) return super.shouldInterceptRequest(
+                view,
+                request
+            )
 
             try {
                 val uriPath = request.url.path

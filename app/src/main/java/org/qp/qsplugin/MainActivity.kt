@@ -73,37 +73,36 @@ class MainActivity : ComponentActivity() {
             }
         }
     private val requestCreateFile: ActivityResultLauncher<Intent> =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            if (it.resultCode != RESULT_OK) return@registerForActivityResult
-            val resultData: Intent? = it.data
-            if (resultData == null) return@registerForActivityResult
-            val uri = resultData.data
-
-            if (uri != null) {
-                root.onSaveFile(uri)
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.let { root.onSaveFileResult(it) }
             }
         }
     private val requestOpenFile: ActivityResultLauncher<Intent> =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            if (it.resultCode != RESULT_OK) return@registerForActivityResult
-            val resultData: Intent? = it.data
-            if (resultData == null) return@registerForActivityResult
-            val uri = resultData.data
-
-            if (uri != null) {
-                root.onLoadFile(uri)
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.let { root.onLoadFileResult(it) }
             }
         }
 
-    private var isPauseBlock: Boolean = true
     private var gameId: Long = 1L
     private var gameTitle: String = "Title"
     private var gameDirUri: Uri = Uri.EMPTY
     private var gameFileUri: Uri = Uri.EMPTY
 
+    companion object {
+        private const val EXTRA_GAME_ID = "gameId"
+        private const val EXTRA_GAME_TITLE = "gameTitle"
+        private const val EXTRA_GAME_DIR_URI = "gameDirUri"
+        private const val EXTRA_GAME_FILE_URI = "gameFileUri"
+        private const val EXTRA_GAME_SETTINGS = "gameAppSettings"
+    }
+
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        lifecycle.addObserver(audioPlayer)
 
         if (settingsRepo.settingsState.value.isUseImmersiveMode) {
             val windowInsetsController =
@@ -118,8 +117,6 @@ class MainActivity : ComponentActivity() {
         }
 
         if (savedInstanceState != null) {
-            isPauseBlock = false
-
             val dirUri = savedInstanceState.getParcelable<Uri>("dirUri")
             if (dirUri != null) {
                 gameDirUri = dirUri
@@ -130,30 +127,12 @@ class MainActivity : ComponentActivity() {
                 gameFileUri = fileUri
             }
         } else {
-            val id = intent?.getLongExtra("gameId", 1L)
-            if (id != null) {
-                gameId = id
-            }
-
-            val title = intent?.getStringExtra("gameTitle")
-            if (title != null) {
-                gameTitle = title
-            }
-
-
-            val dirUri = intent?.getParcelableExtra<Uri?>("gameDirUri")
-            if (dirUri != null) {
-                gameDirUri = dirUri
-            }
-
-            val fileUri = intent?.getParcelableExtra<Uri?>("gameFileUri")
-            if (fileUri != null) {
-                gameFileUri = fileUri
-            }
-
-            val settings = intent?.getParcelableExtra<GameSettings?>("gameAppSettings")
-            if (settings != null) {
-                settingsRepo.emitValue(settings)
+            intent?.let {
+                gameId = it.getLongExtra(EXTRA_GAME_ID, 1L)
+                gameTitle = it.getStringExtra(EXTRA_GAME_TITLE) ?: "Title"
+                gameDirUri = it.getParcelableExtra(EXTRA_GAME_DIR_URI) ?: Uri.EMPTY
+                gameFileUri = it.getParcelableExtra(EXTRA_GAME_FILE_URI) ?: Uri.EMPTY
+                settingsRepo.emitValue(it.getParcelableExtra(EXTRA_GAME_SETTINGS) ?: GameSettings())
             }
         }
 
@@ -259,19 +238,5 @@ class MainActivity : ComponentActivity() {
         outState.putParcelable("dirUri", gameDirUri)
         outState.putParcelable("fileUri", gameFileUri)
         super.onSaveInstanceState(outState)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        if (!isPauseBlock) {
-            audioPlayer.pause()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (root.model.value.isGameRunning) {
-            audioPlayer.resume()
-        }
     }
 }

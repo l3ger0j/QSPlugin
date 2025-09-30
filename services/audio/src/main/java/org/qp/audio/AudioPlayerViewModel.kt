@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class AudioPlayerViewModel(
     private val audioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
 
     private val mediaPlayers = ConcurrentHashMap<Uri, MediaPlayer>()
     private var isPaused = false
@@ -29,6 +31,14 @@ class AudioPlayerViewModel(
         viewModelScope.launch(audioDispatcher) {
             block()
         }
+
+    override fun onResume(owner: LifecycleOwner) {
+        resume()
+    }
+
+    override fun onPause(owner: LifecycleOwner) {
+        pause()
+    }
 
     fun resume() {
         if (!isSoundEnabled || !isPaused) return
