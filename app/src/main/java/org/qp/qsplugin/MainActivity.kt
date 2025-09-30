@@ -29,7 +29,7 @@ import com.arkivanov.decompose.defaultComponentContext
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import org.koin.android.ext.android.inject
-import org.qp.audio.AudioPlayerService
+import org.qp.audio.AudioPlayerViewModel
 import org.qp.dialogs.presentation.DialogsMainContent
 import org.qp.dto.GameSettings
 import org.qp.extra.presentation.ExtraContent
@@ -44,7 +44,7 @@ import kotlin.concurrent.thread
 class MainActivity : ComponentActivity() {
     private lateinit var root: RealRootComponent
 
-    private val audioPlayer: AudioPlayerService by inject()
+    private val audioPlayer: AudioPlayerViewModel by inject()
     private val settingsRepo: SettingsRepo by inject()
 
     private val requestFolderAccess: ActivityResultLauncher<Uri?> =
@@ -104,8 +104,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        audioPlayer.start()
 
         if (settingsRepo.settingsState.value.isUseImmersiveMode) {
             val windowInsetsController =

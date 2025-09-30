@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.qp.audio.AudioPlayerService
+import org.qp.audio.AudioPlayerViewModel
 import org.qp.dto.GameInterface
 import org.qp.dto.LibGameState
 import org.qp.dto.LibGenItem
@@ -47,7 +47,7 @@ import java.util.concurrent.CompletionException
 import kotlin.contracts.ExperimentalContracts
 
 class SupervisorService(
-    private val audioPlayer: AudioPlayerService,
+    private val audioPlayer: AudioPlayerViewModel,
     private val settingsRepo: SettingsRepo
 ) : ViewModel(), GameInterface, KoinComponent {
 
