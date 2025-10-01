@@ -1,16 +1,15 @@
 package org.qp.presentation.mvi
 
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.pixnpunk.natives.SupervisorViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.qp.presentation.mvi.ObjectStore.Message.UpdateObjects
-import org.qp.settings.SettingsRepo
-import org.qp.supervisor.SupervisorService
 
 class ObjectExecutor(
-    private val service: SupervisorService
+    private val service: SupervisorViewModel
 ) : CoroutineExecutor<ObjectStore.Intent, ObjectStore.Action, ObjectStore.State, ObjectStore.Message, ObjectStore.Label>() {
     private val outScope = CoroutineScope(Dispatchers.Default)
 

@@ -1,6 +1,7 @@
 package org.qp.main.presentation.mvi
 
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.pixnpunk.natives.SupervisorViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -12,13 +13,12 @@ import org.qp.main.presentation.mvi.MainStore.Message.UpdateActions
 import org.qp.main.presentation.mvi.MainStore.Message.UpdateMainDesc
 import org.qp.main.presentation.mvi.MainStore.Message.UpdateVisActions
 import org.qp.settings.SettingsRepo
-import org.qp.supervisor.SupervisorService
 import org.qp.utils.HtmlUtil.appendPageTemplate
 import org.qp.utils.HtmlUtil.getCleanHtmlAndMedia
 import org.qp.utils.HtmlUtil.getCleanHtmlRemMedia
 
 class MainExecutor(
-    private val service: SupervisorService,
+    private val service: SupervisorViewModel,
     private val settingsRepo: SettingsRepo
 ) : CoroutineExecutor<MainStore.Intent, MainStore.Action, MainStore.State, MainStore.Message, MainStore.Label>() {
     private val outScope = CoroutineScope(Dispatchers.Default)

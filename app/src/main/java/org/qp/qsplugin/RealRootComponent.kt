@@ -34,6 +34,7 @@ import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.extensions.coroutines.labels
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
+import com.pixnpunk.natives.SupervisorViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -50,7 +51,6 @@ import org.qp.presentation.RealInputComponent
 import org.qp.presentation.RealObjectComponent
 import org.qp.qsplugin.mvi.RealRootStore
 import org.qp.qsplugin.mvi.RootStore
-import org.qp.supervisor.SupervisorService
 import org.qp.utils.Base64Util.decodeBase64
 import org.qp.utils.Base64Util.isBase64
 import org.qp.utils.FileUtil.isWritableDir
@@ -65,7 +65,7 @@ class RealRootComponent(
     private val appContext: Context
 ) : ComponentContext by componentContext, RootComponent, KoinComponent {
 
-    private val supervisorService: SupervisorService by inject()
+    private val supervisorService: SupervisorViewModel by inject()
 
     private var rootDir: DocumentFile? = null
 

@@ -3,18 +3,21 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
+    id("io.github.fletchmckee.ktjni") version "0.1.0"
 }
 
 android {
-    namespace = "org.qp.object.presentation"
+    namespace = "com.pixnpunk.natives"
     compileSdk = 36
 
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
     }
 
     buildTypes {
@@ -38,38 +41,36 @@ android {
         }
     }
 
-    buildFeatures {
-        compose = true
+    externalNativeBuild {
+        cmake {
+            path = File("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
+    ndkVersion = "27.3.13750724"
+    lint {
+        abortOnError = false
     }
 }
 
 dependencies {
     implementation(project(":core:dto"))
     implementation(project(":core:utils"))
+    implementation(project(":services:audio"))
     implementation(project(":services:settings"))
-    implementation(project(":services:natives"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.documentfile)
 
     implementation(libs.kotlinx.coroutines.android)
-
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.android)
 
-    implementation(libs.essenty.lifecycle)
-    implementation(libs.decompose.core)
-    implementation(libs.decompose.ext)
-    implementation(libs.mvikotlin.core)
-    implementation(libs.mvikotlin.main)
-    implementation(libs.mvikotlin.coro.ext)
+    implementation(libs.storage)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

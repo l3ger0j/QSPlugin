@@ -1,11 +1,11 @@
 package org.qp.qsplugin
 
 import android.app.Application
+import com.pixnpunk.natives.di.supervisorModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.qp.audio.audioModule
 import org.qp.settings.settingsModule
-import org.qp.supervisor.supervisorModule
 
 class QSPlugin : Application() {
     override fun onCreate() {

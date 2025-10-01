@@ -23,22 +23,24 @@ rootProject.name = "QSPlugin"
 
 include(":app")
 
-include(":core")
-include(":core:utils")
-include(":core:dto")
+include(
+    ":core",
+    ":core:utils",
+    ":core:dto"
+)
 
-include(":features")
-include(":features:main:presentation")
-include(":features:extra:presentation")
-include(":features:object:presentation")
-include(":features:input:presentation")
-include(":features:dialogs:presentation")
+include(
+    ":features",
+    ":features:main:presentation",
+    ":features:extra:presentation",
+    ":features:object:presentation",
+    ":features:input:presentation",
+    ":features:dialogs:presentation"
+)
 
-include(":services")
-include(":services:native-lib")
-include(":services:native-lib:byte")
-include(":services:native-lib:sonnix")
-include(":services:native-lib:qsengo")
-include(":services:native-lib:supervisor")
-include(":services:audio")
-include(":services:settings")
+include(
+    ":services",
+    ":services:audio",
+    ":services:natives",
+    ":services:settings"
+)

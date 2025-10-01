@@ -51,7 +51,7 @@ dependencies {
     implementation(project(":core:dto"))
     implementation(project(":core:utils"))
     implementation(project(":services:audio"))
-    implementation(project(":services:native-lib:supervisor"))
+    implementation(project(":services:natives"))
     implementation(project(":services:settings:"))
     implementation(project(":features:dialogs:presentation"))
     implementation(project(":features:main:presentation"))

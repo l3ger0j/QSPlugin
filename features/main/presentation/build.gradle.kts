@@ -47,7 +47,7 @@ dependencies {
     implementation(project(":core:dto"))
     implementation(project(":core:utils"))
     implementation(project(":services:settings"))
-    implementation(project(":services:native-lib:supervisor"))
+    implementation(project(":services:natives"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.anggrayudi.storage.file.MimeType.BINARY_FILE
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.pixnpunk.natives.SupervisorViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -25,13 +26,12 @@ import org.qp.qsplugin.mvi.RootStore.Message.UpdateStateNestedSave
 import org.qp.qsplugin.mvi.RootStore.Message.UpdateVisExtraElement
 import org.qp.qsplugin.mvi.RootStore.Message.UpdateVisInputElement
 import org.qp.qsplugin.mvi.RootStore.Message.UpdateVisObjElement
-import org.qp.supervisor.SupervisorService
 import org.qp.utils.PathUtil.getImageUriFromPath
 import org.qp.utils.PathUtil.normalizeContentPath
 
 internal class RootExecutor(
     private val appContext: Context,
-    private val service: SupervisorService
+    private val service: SupervisorViewModel
 ) : CoroutineExecutor<RootStore.Intent, RootStore.Action, RootStore.State, RootStore.Message, RootStore.Label>() {
     private val outScope = CoroutineScope(Dispatchers.Default)
 

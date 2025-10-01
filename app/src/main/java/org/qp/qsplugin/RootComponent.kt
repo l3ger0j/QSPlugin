@@ -15,7 +15,6 @@ import org.qp.presentation.InputComponent
 import org.qp.presentation.ObjectComponent
 import org.qp.qsplugin.RealRootComponent.ChildConfig
 import org.qp.qsplugin.mvi.RootStore
-import org.qp.supervisor.SupervisorService
 
 sealed interface RootComponent {
     val childStack: Value<ChildStack<*, Child>>
