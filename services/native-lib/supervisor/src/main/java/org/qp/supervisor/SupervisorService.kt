@@ -36,7 +36,7 @@ import org.qp.dto.LibTypePopup
 import org.qp.dto.LibTypeWindow
 import org.qp.dto.LibUIConfig
 import org.qp.native_lib_byte.NativeLibByteImpl
-import org.qp.native_lib_seedharta.NativeLibSeedhartaImpl
+import com.pixnpunk.qsengo.impl.QSEngoImpl
 import org.qp.native_lib_sonnix.NativeLibSonnixImpl
 import org.qp.settings.SettingsRepo
 import org.qp.utils.FileUtil.isWritableDir
@@ -63,7 +63,7 @@ class SupervisorService(
         get() = settingsRepo.settingsState.value.nativeLibVersion
     private val libNativeByte = NativeLibByteImpl(context, this)
     private val libNativeSonnix = NativeLibSonnixImpl(context, this)
-    private val libNativeSeedharta = NativeLibSeedhartaImpl(context, this)
+    private val libNativeSeedharta = QSEngoImpl(context, this)
 
     private var gameDirUri: Uri = Uri.EMPTY
 

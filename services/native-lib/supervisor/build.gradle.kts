@@ -45,7 +45,7 @@ dependencies {
     implementation(project(":services:settings"))
     implementation(project(":services:native-lib:byte"))
     implementation(project(":services::native-lib:sonnix"))
-    implementation(project(":services::native-lib:seedharta"))
+    implementation(project(":services::native-lib:qsengo"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

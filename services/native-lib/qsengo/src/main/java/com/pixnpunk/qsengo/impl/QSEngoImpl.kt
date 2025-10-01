@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalContracts::class)
 
-package org.qp.native_lib_seedharta
+package com.pixnpunk.qsengo.impl
 
 import android.content.Context
 import android.net.Uri
@@ -13,8 +13,8 @@ import com.anggrayudi.storage.file.DocumentFileCompat.fromUri
 import com.anggrayudi.storage.file.MimeType
 import com.anggrayudi.storage.file.child
 import com.anggrayudi.storage.file.getAbsolutePath
+import com.pixnpunk.qsengo.jni.QSEngo
 import kotlinx.coroutines.Runnable
-import org.libndkqsp.jni.NDKLib
 import org.qp.dto.GameInterface
 import org.qp.dto.LibGameState
 import org.qp.dto.LibGenItem
@@ -41,12 +41,12 @@ import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 import kotlin.contracts.ExperimentalContracts
 
-class NativeLibSeedhartaImpl(
+class QSEngoImpl(
     private val context: Context,
     override var gameInterface: GameInterface,
     override var gameState: LibGameState = LibGameState(),
     override val returnValueQueue: ArrayBlockingQueue<LibReturnValue> = ArrayBlockingQueue(1)
-) : NDKLib(), LibIProxy {
+) : QSEngo(), LibIProxy {
 
     private val libLock = ReentrantLock()
     private var libThread: Thread? = null
@@ -79,6 +79,12 @@ class NativeLibSeedhartaImpl(
         val gameFile = gameFileUri.toDocumentFile(context) ?: return false
         val gameFileFullPath = gameFile.getAbsolutePath(context)
         val gameData = gameFileUri.readFileContents(context) ?: return false
+
+//        val fd = context.contentResolver
+//            .openFileDescriptor(gameFileUri, "r")
+//            .runCatching { this?.fileDescriptor ?: FileDescriptor() }
+//            .getOrDefault(FileDescriptor())
+
         return executeQspCommand { loadGameWorldFromData(gameData, gameFileFullPath) }
     }
 
@@ -253,6 +259,12 @@ class NativeLibSeedhartaImpl(
         }
 
         val gameData = uri.readFileContents(context) ?: return
+
+//        val fd = context.contentResolver
+//            .openFileDescriptor(uri, "r")
+//            .runCatching { this?.fileDescriptor ?: FileDescriptor() }
+//            .getOrDefault(FileDescriptor())
+
         executeQspCommand { openSavedGameFromData(gameData, true) }
     }
 

@@ -1,6 +1,8 @@
-package org.libndkqsp.jni
+package com.pixnpunk.qsengo.jni
 
-abstract class NDKLib {
+import java.io.FileDescriptor
+
+abstract class QSEngo {
     @JvmRecord
     data class ListItem(val image: String?, val text: String?)
 
@@ -59,9 +61,11 @@ abstract class NDKLib {
     external fun getErrorDesc(errorNum: Int): String?
 
     // --- Game ---
-    external fun loadGameWorldFromData(data: ByteArray?, fileName: String?): Boolean
+    external fun loadGameWorldFromData(data: ByteArray, fileName: String): Boolean
+    external fun loadGameWorldFromFD(fileDescriptor: FileDescriptor, fileName: String): Boolean
     external fun saveGameAsData(isRefresh: Boolean): ByteArray?
     external fun openSavedGameFromData(data: ByteArray?, isRefresh: Boolean): Boolean
+    external fun openSavedGameFromFD(fileDescriptor: FileDescriptor, isRefresh: Boolean): Boolean
     external fun restartGame(isRefresh: Boolean): Boolean
     external fun selectMenuItem(index: Int)
 
