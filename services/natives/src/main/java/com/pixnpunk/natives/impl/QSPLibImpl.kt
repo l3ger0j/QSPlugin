@@ -281,7 +281,7 @@ class QSPLibImpl(
         runOnQspThread { executeQspCommand { execString(code, true) } }
     }
 
-    override fun execute(code: String?) {
+    override fun execute(code: String) {
         runOnQspThread { executeQspCommand { execString(code, true) } }
     }
 

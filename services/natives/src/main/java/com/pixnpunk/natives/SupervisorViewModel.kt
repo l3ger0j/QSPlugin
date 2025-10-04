@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anggrayudi.storage.extension.toDocumentFile
@@ -11,8 +12,8 @@ import com.anggrayudi.storage.file.DocumentFileCompat.doesExist
 import com.anggrayudi.storage.file.DocumentFileCompat.fromFullPath
 import com.anggrayudi.storage.file.child
 import com.anggrayudi.storage.file.makeFile
-import com.pixnpunk.natives.impl.QSEngNImpl
-import com.pixnpunk.natives.impl.QSEngOImpl
+import com.pixnpunk.natives.impl.QSLibSNXImpl
+import com.pixnpunk.natives.impl.QSLibSDHImpl
 import com.pixnpunk.natives.impl.QSPLibImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,7 @@ import org.qp.settings.SettingsRepo
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
 import org.qp.utils.PathUtil.normalizeContentPath
+import org.qp.utils.PathUtil.pathToFile
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import kotlin.contracts.ExperimentalContracts
@@ -62,8 +64,8 @@ class SupervisorViewModel(
     private val mLibVersion: Int
         get() = settingsRepo.settingsState.value.nativeLibVersion
     private val libNativeByte = QSPLibImpl(context, this)
-    private val libNativeSonnix = QSEngNImpl(context, this)
-    private val libNativeSeedharta = QSEngOImpl(context, this)
+    private val libNativeSonnix = QSLibSNXImpl(context, this)
+    private val libNativeSeedharta = QSLibSDHImpl(context, this)
 
     private var gameDirUri: Uri = Uri.EMPTY
 
@@ -108,7 +110,17 @@ class SupervisorViewModel(
     }
 
     fun putReturnValue(returnValue: LibReturnValue) {
-        libNativeByte.returnValueQueue.offer(returnValue)
+        when (mLibVersion) {
+            595 -> {
+                libNativeByte.returnValueQueue.offer(returnValue)
+            }
+            575 -> {
+                libNativeSonnix.returnValueQueue.offer(returnValue)
+            }
+            570 -> {
+                libNativeSeedharta.returnValueQueue.offer(returnValue)
+            }
+        }
     }
 
     fun startService(
@@ -249,18 +261,13 @@ class SupervisorViewModel(
     @OptIn(ExperimentalContracts::class)
     override fun requestReceiveFile(filePath: String) {
         val gameDir = gameDirUri.toDocumentFile(context)
-        if (!gameDir.isWritableDir(context)) return
-
-        val docFile = if (doesExist(context, filePath)) {
-            fromFullPath(context, filePath)
-        } else {
-            gameDir.child(context, filePath)
-        }
-
-        if (docFile.isWritableFile(context)) {
-            putReturnValue(LibReturnValue(fileUri = docFile.uri))
-        } else {
-            Log.e(javaClass.simpleName, "requestReceiveFile: ERROR!")
+        if (gameDir.isWritableDir(context)) {
+            val docFile = filePath.pathToFile(context, gameDir)
+            if (docFile.isWritableFile(context)) {
+                putReturnValue(LibReturnValue(fileUri = docFile.uri))
+            } else {
+                Log.e(javaClass.simpleName, "requestReceiveFile: ERROR!")
+            }
         }
     }
 
@@ -285,22 +292,20 @@ class SupervisorViewModel(
     @OptIn(ExperimentalContracts::class)
     override fun isPlayingFile(filePath: String) {
         val gameDir = gameDirUri.toDocumentFile(context)
-        if (!gameDir.isWritableDir(context)) return
-
-        val docFile = gameDir.child(
-            context = context,
-            path = filePath.normalizeContentPath()
-        )
-
-        if (docFile.isWritableFile(context)) {
-            putReturnValue(
-                LibReturnValue(
-                    playFileState = audioPlayer.isPlayingFile(docFile.uri)
+        if (gameDir.isWritableDir(context)) {
+            val docFile = filePath
+                .normalizeContentPath()
+                .pathToFile(context, gameDir)
+            if (docFile.isWritableFile(context)) {
+                putReturnValue(
+                    LibReturnValue(
+                        playFileState = audioPlayer.isPlayingFile(docFile.uri)
+                    )
                 )
-            )
-        } else {
-            val errorMsg = RuntimeException("Sound file by path: $filePath not writable")
-            Log.e(javaClass.simpleName, "isPlayingFile: ERROR!", errorMsg)
+            } else {
+                val errorMsg = RuntimeException("Sound file by path: $filePath not writable")
+                Log.e(javaClass.simpleName, "isPlayingFile: ERROR!", errorMsg)
+            }
         }
     }
 
@@ -308,73 +313,40 @@ class SupervisorViewModel(
         try {
             audioPlayer.closeAllFiles()
         } catch (e: Exception) {
-            // doShowErrorDialog(t.toString(), ErrorType.EXCEPTION)
             Log.e(javaClass.simpleName, "closeAllFiles: ERROR!", e)
         }
     }
 
     @OptIn(ExperimentalContracts::class)
-    override fun closeFile(filePath: String?) {
+    override fun closeFile(filePath: String) {
         val gameDir = gameDirUri.toDocumentFile(context)
-        if (!gameDir.isWritableDir(context)) return
-
-        val normPath = filePath ?: "".normalizeContentPath()
-        CompletableFuture
-            .supplyAsync { gameDir.child(context, normPath) }
-            .thenApply {
-                return@thenApply if (it.isWritableFile(context)) {
-                    it.uri
-                } else {
-                    Uri.EMPTY
-                }
+        if (gameDir.isWritableDir(context)) {
+            val docFile = filePath
+                .normalizeContentPath()
+                .pathToFile(context, gameDir)
+            if (docFile.isWritableFile(context)) {
+                audioPlayer.closeFile(docFile.uri)
+            } else {
+                val errorMsg = RuntimeException("Sound file by path: $filePath not writable")
+                Log.e(javaClass.simpleName, "closeFile: ERROR!", errorMsg)
             }
-            .thenApply {
-                if (it !== Uri.EMPTY) {
-                    audioPlayer.closeFile(it)
-                } else {
-                    val errorMsg = "Sound file by path: $filePath not writable"
-                    throw CompletionException(RuntimeException(errorMsg))
-                }
-            }
-            .exceptionally {
-//                if (getSettingsController().isUseMusicDebug) {
-//                    doShowErrorDialog(throwable.toString(), ErrorType.SOUND_ERROR)
-//                }
-                Log.e(javaClass.simpleName, "closeFile: ERROR!", it)
-                null
-            }
+        }
     }
 
     @OptIn(ExperimentalContracts::class)
-    override fun playFile(path: String?, volume: Int) {
+    override fun playFile(path: String, volume: Int) {
         val gameDir = gameDirUri.toDocumentFile(context)
-        if (!gameDir.isWritableDir(context)) return
-
-        val normPath = path ?: "".normalizeContentPath()
-        CompletableFuture
-            .supplyAsync { gameDir.child(context, normPath) }
-            .thenApply {
-                return@thenApply if (it.isWritableFile(context)) {
-                    it.uri
-                } else {
-                    Uri.EMPTY
-                }
+        if (gameDir.isWritableDir(context)) {
+            val docFile = path
+                .normalizeContentPath()
+                .pathToFile(context, gameDir)
+            if (docFile.isWritableFile(context)) {
+                audioPlayer.playFile(context, docFile.uri, volume)
+            } else {
+                val errorMsg = RuntimeException("Sound file by path: $path not writable")
+                Log.e(javaClass.simpleName, "playFile: ERROR!", errorMsg)
             }
-            .thenApply {
-                if (it != Uri.EMPTY) {
-                    audioPlayer.playFile(context, it, volume)
-                } else {
-                    val errorMsg = "Sound file by path: $path not writable"
-                    throw CompletionException(RuntimeException(errorMsg))
-                }
-            }
-            .exceptionally {
-//                if (getSettingsController().isUseMusicDebug) {
-//                    doShowErrorDialog(throwable.toString(), ErrorType.SOUND_ERROR)
-//                }
-                Log.e(javaClass.simpleName, "playFile: ERROR!", it)
-                null
-            }
+        }
     }
 
     @OptIn(ExperimentalContracts::class)

@@ -26,7 +26,7 @@ interface LibIProxy {
     /**
      * Starts execution of the specified line of code in the library.
      */
-    fun execute(code: String?)
+    fun execute(code: String)
 
     /**
      * Starts processing the location counter in the library.

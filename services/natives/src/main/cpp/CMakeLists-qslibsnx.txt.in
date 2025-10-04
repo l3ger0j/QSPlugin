@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.13)
+project(qslibsnx-download NONE)
+
+include(ExternalProject)
+ExternalProject_Add(qslibsnx
+    GIT_REPOSITORY https://github.com/l3ger0j/QSLibSNX.git
+    GIT_TAG master
+    GIT_PROGRESS true
+    SOURCE_DIR "${CMAKE_BINARY_DIR}/qslibsnx-src"
+    BINARY_DIR "${CMAKE_BINARY_DIR}/qslibsnx-build"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    TEST_COMMAND ""
+)

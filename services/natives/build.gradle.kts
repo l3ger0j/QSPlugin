@@ -18,6 +18,12 @@ android {
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
+
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DBUILD_JAVA=1", "-DBUILD_JVM=1", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+            }
+        }
     }
 
     buildTypes {

@@ -5,8 +5,8 @@ interface GameInterface {
     fun requestCreateFile(path: String, mimeType: String)
     fun isPlayingFile(filePath: String)
     fun closeAllFiles()
-    fun closeFile(filePath: String?)
-    fun playFile(path: String?, volume: Int)
+    fun closeFile(filePath: String)
+    fun playFile(path: String, volume: Int)
     fun changeGameDir(filePath: String)
     fun showLibDialog(
         dialogType: LibTypeDialog,
