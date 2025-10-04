@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.anggrayudi.storage.file.DocumentFileCompat.doesExist
+import com.anggrayudi.storage.file.DocumentFileCompat.fromFullPath
 import com.anggrayudi.storage.file.child
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
@@ -15,6 +17,13 @@ object PathUtil {
         return if (idx == -1) this else this.substring(idx + 1)
     }
 
+    fun String.pathToFile(context: Context, rootDir: DocumentFile) =
+        if (doesExist(context, this)) {
+            fromFullPath(context, this)
+        } else {
+            rootDir.child(context, this)
+        }
+
     @OptIn(ExperimentalContracts::class)
     fun String.getImageUriFromPath(
         context: Context,
@@ -23,7 +32,7 @@ object PathUtil {
         if (!rootDir.isWritableDir(context)) return Uri.EMPTY
         val relPath = this.toUri().path
         if (relPath.isNullOrEmpty()) return Uri.EMPTY
-        val imageFile = rootDir.child(context, relPath)
+        val imageFile = relPath.pathToFile(context, rootDir)
         if (!imageFile.isWritableFile(context)) return Uri.EMPTY
         return imageFile.uri
     }
