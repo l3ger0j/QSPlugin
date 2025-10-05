@@ -1,41 +1,96 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(qspbuild)
 
-set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+include(GNUInstallDirs)
+include(ExternalProject)
 
-#configure_file(CMakeLists-qsp.txt.in "${CMAKE_BINARY_DIR}/qsp-download/CMakeLists.txt")
-#execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}" .
-#        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/qsp-download"
-#)
-#execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-#        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/qsp-download"
-#)
-#
-#add_subdirectory("${CMAKE_BINARY_DIR}/qsp-src"
-#                 "${CMAKE_BINARY_DIR}/qsp-build"
-#)
+set(QSP_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-install")
+set(QSLIBSNX_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-install")
+set(QSLIBSDH_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-install")
 
-#configure_file(CMakeLists-qslibsnx.txt.in "${CMAKE_BINARY_DIR}/qslibsnx-download/CMakeLists.txt")
-#execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}" .
-#        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/qslibsnx-download"
-#)
-#execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-#        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/qslibsnx-download"
-#)
-#
-#add_subdirectory("${CMAKE_BINARY_DIR}/qslibsnx-src"
-#                 "${CMAKE_BINARY_DIR}/qslibsnx-build"
-#)
-
-configure_file(CMakeLists-qslibsdh.txt.in "${CMAKE_BINARY_DIR}/qslibsdh-download/CMakeLists.txt")
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}" .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/qslibsdh-download"
-)
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/qslibsdh-download"
+ExternalProject_Add(qsp-external
+        GIT_REPOSITORY https://github.com/QSPFoundation/qsp.git
+        GIT_TAG master
+        GIT_PROGRESS true
+        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-src"
+        BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-build"
+        INSTALL_DIR "${QSP_INSTALL_DIR}"
+        CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON
+        -DBUILD_JAVA=1
+        -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DANDROID_PLATFORM=${CMAKE_ANDROID_API}
+        -DANDROID_ABI=${CMAKE_ANDROID_ARCH_ABI}
+        -DANDROID_NDK=${CMAKE_ANDROID_NDK}
+        BUILD_BYPRODUCTS
+        "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qsp${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
 
-add_subdirectory("${CMAKE_BINARY_DIR}/qslibsdh-src"
-                 "${CMAKE_BINARY_DIR}/qslibsdh-build"
+add_library(qsp SHARED IMPORTED)
+file(MAKE_DIRECTORY "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/qsp/default")
+set_target_properties(qsp PROPERTIES
+        IMPORTED_LOCATION "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qsp${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/qsp;${QSP_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/qsp/default")
+add_dependencies(qsp qsp-external)
+
+ExternalProject_Add(qslibsnx-external
+        GIT_REPOSITORY https://github.com/l3ger0j/QSLibSNX.git
+        GIT_TAG master
+        GIT_PROGRESS true
+        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-src"
+        BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-build"
+        INSTALL_DIR "${QSLIBSNX_INSTALL_DIR}"
+        CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON
+        -DBUILD_JVM=1
+        -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DANDROID_PLATFORM=${CMAKE_ANDROID_API}
+        -DANDROID_ABI=${CMAKE_ANDROID_ARCH_ABI}
+        -DANDROID_NDK=${CMAKE_ANDROID_NDK}
+        BUILD_BYPRODUCTS
+        "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsnx${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
+
+add_library(qslibsnx SHARED IMPORTED)
+file(MAKE_DIRECTORY "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/default")
+set_target_properties(qslibsnx PROPERTIES
+        IMPORTED_LOCATION "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsnx${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src;${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/default")
+add_dependencies(qslibsnx qslibsnx-external)
+
+ExternalProject_Add(qslibsdh-external
+        GIT_REPOSITORY https://github.com/l3ger0j/QSLibSDH.git
+        GIT_TAG master
+        GIT_PROGRESS true
+        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-src"
+        BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-build"
+        INSTALL_DIR "${QSLIBSDH_INSTALL_DIR}"
+        CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON
+        -DBUILD_JVM=1
+        -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DANDROID_PLATFORM=${CMAKE_ANDROID_API}
+        -DANDROID_ABI=${CMAKE_ANDROID_ARCH_ABI}
+        -DANDROID_NDK=${CMAKE_ANDROID_NDK}
+        BUILD_BYPRODUCTS
+        "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsdh${CMAKE_SHARED_LIBRARY_SUFFIX}"
+)
+
+add_library(qslibsdh SHARED IMPORTED)
+file(MAKE_DIRECTORY "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/default")
+set_target_properties(qslibsdh PROPERTIES
+        IMPORTED_LOCATION "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsdh${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src;${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/default")
+add_dependencies(qslibsdh qslibsdh-external)
+
+add_executable(main fakemain.c)
+target_link_libraries(main PRIVATE qsp qslibsnx qslibsdh)
