@@ -4,16 +4,13 @@ import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.DocumentFileCompat.doesExist
-import com.anggrayudi.storage.file.DocumentFileCompat.fromFullPath
-import com.anggrayudi.storage.file.child
 import com.anggrayudi.storage.file.makeFile
-import com.pixnpunk.natives.impl.QSLibSNXImpl
 import com.pixnpunk.natives.impl.QSLibSDHImpl
+import com.pixnpunk.natives.impl.QSLibSNXImpl
 import com.pixnpunk.natives.impl.QSPLibImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +42,6 @@ import org.qp.utils.FileUtil.isWritableFile
 import org.qp.utils.PathUtil.normalizeContentPath
 import org.qp.utils.PathUtil.pathToFile
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 import kotlin.contracts.ExperimentalContracts
 
 class SupervisorViewModel(
