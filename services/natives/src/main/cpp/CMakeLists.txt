@@ -1,88 +1,35 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(qspbuild)
 
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
-include(ExternalProject)
+include(FetchContent)
 
-set(QSP_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-install")
-set(QSLIBSNX_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-install")
-set(QSLIBSDH_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-install")
-
-set(ANDROID_CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-)
-
-ExternalProject_Add(qsp-external
+FetchContent_Declare(
+        qsp-external
         GIT_REPOSITORY https://github.com/QSPFoundation/qsp.git
         GIT_TAG master
         GIT_PROGRESS true
+        SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-download"
         SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-src"
         BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qsp-build"
-        INSTALL_DIR "${QSP_INSTALL_DIR}"
-        UPDATE_DISCONNECTED 1
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-            -DBUILD_JAVA=ON
-            ${ANDROID_CMAKE_ARGS}
-        BUILD_BYPRODUCTS
-            "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qsp${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
+FetchContent_MakeAvailable(qsp-external)
 
-add_library(qsp SHARED IMPORTED)
-file(MAKE_DIRECTORY "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/qsp/java")
-set_target_properties(qsp PROPERTIES
-        IMPORTED_LOCATION "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qsp${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES "${QSP_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/qsp;${QSP_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/qsp/java")
-add_dependencies(qsp qsp-external)
-
-ExternalProject_Add(qslibsnx-external
+FetchContent_Declare(qslibsnx-external
         GIT_REPOSITORY https://github.com/l3ger0j/QSLibSNX.git
         GIT_TAG master
         GIT_PROGRESS true
+        SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-download"
         SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-src"
         BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-build"
-        INSTALL_DIR "${QSLIBSNX_INSTALL_DIR}"
-        UPDATE_DISCONNECTED 1
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-            -DBUILD_JVM=ON
-            ${ANDROID_CMAKE_ARGS}
-        BUILD_BYPRODUCTS
-            "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsnx${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
+FetchContent_MakeAvailable(qslibsnx-external)
 
-add_library(qslibsnx SHARED IMPORTED)
-file(MAKE_DIRECTORY "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/jvm")
-set_target_properties(qslibsnx PROPERTIES
-        IMPORTED_LOCATION "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsnx${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES "${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src;${QSLIBSNX_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/jvm")
-add_dependencies(qslibsnx qslibsnx-external)
-
-ExternalProject_Add(qslibsdh-external
+FetchContent_Declare(qslibsdh-external
         GIT_REPOSITORY https://github.com/l3ger0j/QSLibSDH.git
         GIT_TAG master
         GIT_PROGRESS true
+        SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-download"
         SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-src"
         BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-build"
-        INSTALL_DIR "${QSLIBSDH_INSTALL_DIR}"
-        UPDATE_DISCONNECTED 1
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-            -DBUILD_JVM=ON
-            ${ANDROID_CMAKE_ARGS}
-        BUILD_BYPRODUCTS
-            "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsdh${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
-
-add_library(qslibsdh SHARED IMPORTED)
-file(MAKE_DIRECTORY "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/jvm")
-set_target_properties(qslibsdh PROPERTIES
-        IMPORTED_LOCATION "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}qslibsdh${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES "${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src;${QSLIBSDH_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/src/jvm")
-add_dependencies(qslibsdh qslibsdh-external)
-
-add_executable(main fakemain.c)
-target_link_libraries(main PRIVATE qsp qslibsnx qslibsdh)
+FetchContent_MakeAvailable(qslibsdh-external)
