@@ -211,10 +211,6 @@ class QSLibSDHImpl(
         libThread?.interrupt()
     }
 
-//    override fun enableDebugMode(isDebug: Boolean) {
-//        runOnQspThread { enableDebugMode(isDebug) }
-//    }
-
     override fun runGame(
         gameId: Long,
         gameTitle: String,
