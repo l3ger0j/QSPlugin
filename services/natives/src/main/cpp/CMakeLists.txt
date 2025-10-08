@@ -3,8 +3,7 @@ project(qspbuild)
 
 include(FetchContent)
 
-FetchContent_Declare(
-        qsp-external
+FetchContent_Declare(qsp-external
         GIT_REPOSITORY https://github.com/QSPFoundation/qsp.git
         GIT_TAG master
         GIT_PROGRESS true
