@@ -89,16 +89,18 @@ class QSLibSDHImpl(
     }
 
     private fun showLastQspError() {
-        val errorData = getLastErrorData()!!
+        val errorData = getLastErrorData()
         gameInterface.showLibDialog(
             dialogType = LibTypeDialog.DIALOG_ERROR,
             inputString =
                 """
-                Location: ${errorData.locName ?: ""}
-                Action: ${errorData.index}
-                Line: ${errorData.line}
-                Error number: ${errorData.errorNum}
-                Description: ${getErrorDesc(errorData.errorNum) ?: ""}
+                Location: ${errorData?.locName ?: ""}
+                Action: ${errorData?.index}
+                Line: ${errorData?.line}
+                Error number: ${errorData?.errorNum}
+                Description: ${
+                    if (errorData != null) { getErrorDesc(errorData.errorNum) ?: "" } else { "" }
+                }
                 """.trimIndent()
         )
     }
@@ -108,19 +110,19 @@ class QSLibSDHImpl(
      *
      */
     private fun loadUIConfiguration() {
-        val htmlResult = getVarValues("USEHTML", 0)!!
-        val fSizeResult = getVarValues("FSIZE", 0)!!
-        val bColorResult = getVarValues("BCOLOR", 0)!!
-        val fColorResult = getVarValues("FCOLOR", 0)!!
-        val lColorResult = getVarValues("LCOLOR", 0)!!
+        val htmlResult = getVarValues("USEHTML", 0)
+        val fSizeResult = getVarValues("FSIZE", 0)
+        val bColorResult = getVarValues("BCOLOR", 0)
+        val fColorResult = getVarValues("FCOLOR", 0)
+        val lColorResult = getVarValues("LCOLOR", 0)
 
         gameInterface.setUIConfig(
             LibUIConfig(
-                useHtml = htmlResult.intValue != 0,
-                fontSize = fSizeResult.intValue,
-                backColor = bColorResult.intValue,
-                fontColor = fColorResult.intValue,
-                linkColor = lColorResult.intValue
+                useHtml = htmlResult?.intValue != 0,
+                fontSize = fSizeResult?.intValue ?: 0,
+                backColor = bColorResult?.intValue ?: 0,
+                fontColor = fColorResult?.intValue ?: 0,
+                linkColor = lColorResult?.intValue ?: 0
             )
         )
     }
