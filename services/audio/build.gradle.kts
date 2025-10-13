@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "org.qp.audio"
+    namespace = "com.pixnpunk.audio"
     compileSdk = 36
 
     defaultConfig {

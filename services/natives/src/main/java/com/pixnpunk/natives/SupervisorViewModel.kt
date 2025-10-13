@@ -4,18 +4,18 @@ import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.annotation.WorkerThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anggrayudi.storage.extension.toDocumentFile
+import com.anggrayudi.storage.file.CreateMode
 import com.anggrayudi.storage.file.DocumentFileCompat.doesExist
 import com.anggrayudi.storage.file.makeFile
 import com.pixnpunk.natives.impl.QSLibSDHImpl
 import com.pixnpunk.natives.impl.QSLibSNXImpl
 import com.pixnpunk.natives.impl.QSPLibImpl
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,23 +24,23 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.qp.audio.AudioPlayerViewModel
-import org.qp.dto.GameInterface
-import org.qp.dto.LibGameState
-import org.qp.dto.LibGenItem
-import org.qp.dto.LibReturnValue
-import org.qp.dto.LibTypeDialog
-import org.qp.dto.LibTypePopup
-import org.qp.dto.LibTypeWindow
-import org.qp.dto.LibUIConfig
-import org.qp.settings.SettingsRepo
-import org.qp.utils.FileUtil.isWritableDir
-import org.qp.utils.FileUtil.isWritableFile
-import org.qp.utils.PathUtil.normalizeContentPath
-import org.qp.utils.PathUtil.pathToFile
+import com.pixnpunk.audio.AudioPlayerViewModel
+import com.pixnpunk.dto.GameInterface
+import com.pixnpunk.dto.LibGameState
+import com.pixnpunk.dto.LibGenItem
+import com.pixnpunk.dto.LibReturnValue
+import com.pixnpunk.dto.LibTypeDialog
+import com.pixnpunk.dto.LibTypePopup
+import com.pixnpunk.dto.LibTypeWindow
+import com.pixnpunk.dto.LibUIConfig
+import com.pixnpunk.settings.SettingsRepo
+import com.pixnpunk.utils.FileUtil.isWritableDir
+import com.pixnpunk.utils.FileUtil.isWritableFile
+import com.pixnpunk.utils.PathUtil.absToRelPath
+import com.pixnpunk.utils.PathUtil.normalizeContentPath
+import com.pixnpunk.utils.PathUtil.pathToFile
 import java.util.concurrent.CompletableFuture
 import kotlin.contracts.ExperimentalContracts
 
@@ -55,7 +55,6 @@ class SupervisorViewModel(
     private var counterNativeSonnixJob: Job? = null
     private var counterNativeSeedhartaJob: Job? = null
     private var updateSettingsJob: Job? = null
-    private val supervisorServiceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val mLibVersion: Int
         get() = settingsRepo.settingsState.value.nativeLibVersion
@@ -77,7 +76,12 @@ class SupervisorViewModel(
     val gamePopupFlow: SharedFlow<LibTypePopup> = _gamePopupFlow
     val gameElementVis: SharedFlow<Pair<LibTypeWindow, Boolean>> = _gameElementVis
 
-    @Volatile private var counterInterval = 500L
+    companion object {
+        const val RECEIVE_FLOW_TIMEOUT: Long = 10000
+    }
+
+    @Volatile
+    private var counterInterval = 500L
     private val counterNativeByteTask: suspend CoroutineScope.() -> Unit = {
         while (isActive) {
             libNativeByte.executeCounter()
@@ -108,13 +112,15 @@ class SupervisorViewModel(
     fun putReturnValue(returnValue: LibReturnValue) {
         when (mLibVersion) {
             595 -> {
-                libNativeByte.returnValueQueue.offer(returnValue)
+                libNativeByte.returnValueFuture.complete(returnValue)
             }
+
             575 -> {
-                libNativeSonnix.returnValueQueue.offer(returnValue)
+                libNativeSonnix.returnValueFuture.complete(returnValue)
             }
+
             570 -> {
-                libNativeSeedharta.returnValueQueue.offer(returnValue)
+                libNativeSeedharta.returnValueFuture.complete(returnValue)
             }
         }
     }
@@ -134,24 +140,42 @@ class SupervisorViewModel(
                 libNativeByte.startLibThread()
                 libNativeByte.runGame(id, title, dirUri, fileUri)
             }
+
             575 -> {
                 libNativeSonnix.startLibThread()
                 libNativeSonnix.runGame(id, title, dirUri, fileUri)
             }
+
             570 -> {
                 libNativeSeedharta.startLibThread()
                 libNativeSeedharta.runGame(id, title, dirUri, fileUri)
             }
         }
 
-        updateSettingsJob = supervisorServiceScope.launch {
+        updateSettingsJob = viewModelScope.launch {
             settingsRepo.settingsState.combine(gameUIConfFlow) { appSet, libSet ->
                 appSet.copy(
                     isUseHtml = libSet.useHtml,
-                    textColor = if (appSet.isUseGameTextColor && libSet.fontColor != 0) { libSet.fontColor } else { appSet.textColor },
-                    backColor = if (appSet.isUseGameBackgroundColor && libSet.backColor != 0) { libSet.backColor } else { appSet.backColor },
-                    linkColor = if (appSet.isUseGameLinkColor && libSet.linkColor != 0) { libSet.linkColor } else { appSet.linkColor },
-                    fontSize = if (appSet.isUseGameFont && libSet.fontSize != 0) { libSet.fontSize } else { appSet.fontSize }
+                    textColor = if (appSet.isUseGameTextColor && libSet.fontColor != 0) {
+                        libSet.fontColor
+                    } else {
+                        appSet.textColor
+                    },
+                    backColor = if (appSet.isUseGameBackgroundColor && libSet.backColor != 0) {
+                        libSet.backColor
+                    } else {
+                        appSet.backColor
+                    },
+                    linkColor = if (appSet.isUseGameLinkColor && libSet.linkColor != 0) {
+                        libSet.linkColor
+                    } else {
+                        appSet.linkColor
+                    },
+                    fontSize = if (appSet.isUseGameFont && libSet.fontSize != 0) {
+                        libSet.fontSize
+                    } else {
+                        appSet.fontSize
+                    }
                 )
             }.collect { settingsRepo.emitValue(it) }
         }
@@ -172,9 +196,11 @@ class SupervisorViewModel(
             595 -> {
                 libNativeByte.saveGameState(fileUri)
             }
+
             575 -> {
                 libNativeSonnix.saveGameState(fileUri)
             }
+
             570 -> {
                 libNativeSeedharta.saveGameState(fileUri)
             }
@@ -187,9 +213,11 @@ class SupervisorViewModel(
                 595 -> {
                     libNativeByte.loadGameState(fileUri)
                 }
+
                 575 -> {
                     libNativeSonnix.loadGameState(fileUri)
                 }
+
                 570 -> {
                     libNativeSeedharta.loadGameState(fileUri)
                 }
@@ -202,9 +230,11 @@ class SupervisorViewModel(
             595 -> {
                 libNativeByte.execute(execCode)
             }
+
             575 -> {
                 libNativeSonnix.execute(execCode)
             }
+
             570 -> {
                 libNativeSeedharta.execute(execCode)
             }
@@ -216,10 +246,12 @@ class SupervisorViewModel(
             595 -> {
                 libNativeByte.restartGame()
             }
+
             575 -> {
                 libNativeSonnix.restartGame()
 
             }
+
             570 -> {
                 libNativeSeedharta.restartGame()
             }
@@ -231,9 +263,11 @@ class SupervisorViewModel(
             595 -> {
                 libNativeByte.onActionClicked(index)
             }
+
             575 -> {
                 libNativeSonnix.onActionClicked(index)
             }
+
             570 -> {
                 libNativeSeedharta.onActionClicked(index)
             }
@@ -245,9 +279,11 @@ class SupervisorViewModel(
             595 -> {
                 libNativeByte.onObjectSelected(index)
             }
+
             575 -> {
                 libNativeSonnix.onObjectSelected(index)
             }
+
             570 -> {
                 libNativeSeedharta.onObjectSelected(index)
             }
@@ -255,54 +291,56 @@ class SupervisorViewModel(
     }
 
     @OptIn(ExperimentalContracts::class)
-    override fun requestReceiveFile(filePath: String) {
+    override fun requestReceiveFile(filePath: String): Uri {
         val gameDir = gameDirUri.toDocumentFile(context)
         if (gameDir.isWritableDir(context)) {
             val docFile = filePath.pathToFile(context, gameDir)
             if (docFile.isWritableFile(context)) {
-                putReturnValue(LibReturnValue(fileUri = docFile.uri))
+                return docFile.uri
             } else {
                 Log.e(javaClass.simpleName, "requestReceiveFile: ERROR!")
             }
         }
+        return Uri.EMPTY
     }
 
     @OptIn(ExperimentalContracts::class)
-    override fun requestCreateFile(path: String, mimeType: String) {
+    @WorkerThread
+    override fun requestCreateFile(path: String, mimeType: String): Uri {
         val gameDir = gameDirUri.toDocumentFile(context)
-        if (!gameDir.isWritableDir(context)) return
+        if (!gameDir.isWritableDir(context)) return Uri.EMPTY
 
-        viewModelScope.launch {
-            val docFile = withContext(Dispatchers.IO) {
-                gameDir.makeFile(context, path, mimeType)
+        return CompletableFuture
+            .supplyAsync {
+                val relPath = path.absToRelPath(context, gameDir)
+                gameDir.makeFile(context, relPath, mimeType, CreateMode.REUSE)
             }
-
-            if (docFile.isWritableFile(context)) {
-                putReturnValue(LibReturnValue(fileUri = docFile.uri))
-            } else {
-                Log.e(javaClass.simpleName, "requestCreateFile: ERROR!")
+            .thenApply {
+                if (it.isWritableFile(context)) {
+                    return@thenApply it.uri
+                } else {
+                    Log.e(javaClass.simpleName, "requestCreateFile: ERROR!")
+                    return@thenApply Uri.EMPTY
+                }
             }
-        }
+            .get()
     }
 
     @OptIn(ExperimentalContracts::class)
-    override fun isPlayingFile(filePath: String) {
+    override fun isPlayingFile(filePath: String): Boolean {
         val gameDir = gameDirUri.toDocumentFile(context)
         if (gameDir.isWritableDir(context)) {
             val docFile = filePath
                 .normalizeContentPath()
                 .pathToFile(context, gameDir)
             if (docFile.isWritableFile(context)) {
-                putReturnValue(
-                    LibReturnValue(
-                        playFileState = audioPlayer.isPlayingFile(docFile.uri)
-                    )
-                )
+                return audioPlayer.isPlayingFile(docFile.uri)
             } else {
                 val errorMsg = RuntimeException("Sound file by path: $filePath not writable")
                 Log.e(javaClass.simpleName, "isPlayingFile: ERROR!", errorMsg)
             }
         }
+        return false
     }
 
     override fun closeAllFiles() {
@@ -370,13 +408,13 @@ class SupervisorViewModel(
         inputString: String,
         menuItems: List<LibGenItem>
     ) {
-        supervisorServiceScope.launch {
+        viewModelScope.launch {
             _gameDialogFlow.emit(Triple(dialogType, inputString, menuItems))
         }
     }
 
     override fun showLibPopup(popupType: LibTypePopup) {
-        supervisorServiceScope.launch {
+        viewModelScope.launch {
             _gamePopupFlow.emit(popupType)
         }
     }
@@ -385,7 +423,7 @@ class SupervisorViewModel(
         type: LibTypeWindow,
         show: Boolean
     ) {
-        supervisorServiceScope.launch {
+        viewModelScope.launch {
             _gameElementVis.emit(type to show)
         }
     }
@@ -400,19 +438,21 @@ class SupervisorViewModel(
                 counterNativeByteJob?.cancel()
                 runnable.run()
                 counterNativeByteJob =
-                    supervisorServiceScope.launch(block = counterNativeByteTask)
+                    viewModelScope.launch(block = counterNativeByteTask)
             }
+
             575 -> {
                 counterNativeSonnixJob?.cancel()
                 runnable.run()
                 counterNativeSonnixJob =
-                    supervisorServiceScope.launch(block = counterNativeSonnixTask)
+                    viewModelScope.launch(block = counterNativeSonnixTask)
             }
+
             570 -> {
                 counterNativeSeedhartaJob?.cancel()
                 runnable.run()
                 counterNativeSeedhartaJob =
-                    supervisorServiceScope.launch(block = counterNativeSeedhartaTask)
+                    viewModelScope.launch(block = counterNativeSeedhartaTask)
             }
         }
     }

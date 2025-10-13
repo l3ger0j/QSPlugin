@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "org.qp.object.presentation"
+    namespace = "com.pixnpunk.object.presentation"
     compileSdk = 36
 
     defaultConfig {

@@ -32,3 +32,5 @@ FetchContent_Declare(qslibsdh-external
         BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-build"
 )
 FetchContent_MakeAvailable(qslibsdh-external)
+
+#add_subdirectory(QSLibSDH)

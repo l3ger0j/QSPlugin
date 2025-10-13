@@ -14,25 +14,27 @@ import com.anggrayudi.storage.file.MimeType
 import com.anggrayudi.storage.file.child
 import com.anggrayudi.storage.file.getAbsolutePath
 import com.libsnxqs.jni.QSLibSNX
-import org.qp.dto.GameInterface
-import org.qp.dto.LibGameState
-import org.qp.dto.LibGenItem
-import org.qp.dto.LibIProxy
-import org.qp.dto.LibReturnValue
-import org.qp.dto.LibTypeDialog
-import org.qp.dto.LibTypePopup
-import org.qp.dto.LibTypeWindow
-import org.qp.dto.LibUIConfig
-import org.qp.utils.FileUtil.isWritableDir
-import org.qp.utils.FileUtil.isWritableFile
-import org.qp.utils.FileUtil.readFileContents
-import org.qp.utils.FileUtil.writeFileContents
-import org.qp.utils.HtmlUtil.getSrcDir
-import org.qp.utils.HtmlUtil.isContainsHtmlTags
-import org.qp.utils.PathUtil.getFilename
-import org.qp.utils.PathUtil.normalizeContentPath
-import org.qp.utils.ThreadUtil
+import com.pixnpunk.natives.SupervisorViewModel.Companion.RECEIVE_FLOW_TIMEOUT
+import com.pixnpunk.dto.GameInterface
+import com.pixnpunk.dto.LibGameState
+import com.pixnpunk.dto.LibGenItem
+import com.pixnpunk.dto.LibIProxy
+import com.pixnpunk.dto.LibReturnValue
+import com.pixnpunk.dto.LibTypeDialog
+import com.pixnpunk.dto.LibTypePopup
+import com.pixnpunk.dto.LibTypeWindow
+import com.pixnpunk.dto.LibUIConfig
+import com.pixnpunk.utils.FileUtil.isWritableDir
+import com.pixnpunk.utils.FileUtil.isWritableFile
+import com.pixnpunk.utils.FileUtil.readFileContents
+import com.pixnpunk.utils.FileUtil.writeFileContents
+import com.pixnpunk.utils.HtmlUtil.getSrcDir
+import com.pixnpunk.utils.HtmlUtil.isContainsHtmlTags
+import com.pixnpunk.utils.PathUtil.getFilename
+import com.pixnpunk.utils.PathUtil.normalizeContentPath
+import com.pixnpunk.utils.ThreadUtil
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
@@ -44,7 +46,7 @@ class QSLibSNXImpl(
     private val context: Context,
     override var gameInterface: GameInterface,
     override var gameState: LibGameState = LibGameState(),
-    override val returnValueQueue: ArrayBlockingQueue<LibReturnValue> = ArrayBlockingQueue(1)
+    override var returnValueFuture: CompletableFuture<LibReturnValue> = CompletableFuture()
 ) : QSLibSNX(), LibIProxy {
 
     private val libLock = ReentrantLock()
@@ -330,15 +332,14 @@ class QSLibSNXImpl(
     }
 
     override fun onIsPlayingFile(path: String?): Boolean {
-        if (path.isNullOrBlank()) {
-            return false
+        return if (path.isNullOrBlank()) {
+            false
         } else {
-            gameInterface.isPlayingFile(path)
-            return try {
-                returnValueQueue.poll(30, TimeUnit.SECONDS)?.playFileState ?: false
-            } catch (_: InterruptedException) {
-                false
-            }
+            runCatching {
+                CompletableFuture
+                    .supplyAsync { gameInterface.isPlayingFile(path) }
+                    .get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS)
+            }.getOrDefault(false)
         }
     }
 
@@ -355,17 +356,19 @@ class QSLibSNXImpl(
             gameInterface.showLibPopup(LibTypePopup.POPUP_LOAD)
         } else {
             gameInterface.requestReceiveFile(filename)
-            try {
-                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
-                if (fileUri != Uri.EMPTY) {
-                    gameInterface.doWithCounterDisabled { loadGameState(fileUri) }
+            runCatching {
+                CompletableFuture
+                    .supplyAsync { gameInterface.requestReceiveFile(filename) }
+                    .get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS)
+            }.onSuccess {
+                if (it != Uri.EMPTY) {
+                    gameInterface.doWithCounterDisabled { loadGameState(it) }
                 } else {
                     gameInterface.showLibDialog(
                         LibTypeDialog.DIALOG_ERROR,
                         "Save file not found"
                     )
                 }
-            } catch (_: InterruptedException) {
             }
         }
     }
@@ -375,29 +378,32 @@ class QSLibSNXImpl(
             gameInterface.showLibPopup(LibTypePopup.POPUP_SAVE)
         } else {
             gameInterface.requestCreateFile(filename, MimeType.BINARY_FILE)
-            try {
-                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
-                if (fileUri != Uri.EMPTY) {
-                    saveGameState(fileUri)
+            runCatching {
+                returnValueFuture = CompletableFuture()
+                gameInterface.requestCreateFile(filename, MimeType.BINARY_FILE)
+                returnValueFuture.get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS).fileUri
+            }.onSuccess {
+                if (it != Uri.EMPTY) {
+                    saveGameState(it)
                 } else {
                     gameInterface.showLibDialog(
                         LibTypeDialog.DIALOG_ERROR,
                         "Error access dir"
                     )
                 }
-            } catch (_: InterruptedException) {
             }
         }
     }
 
     override fun onInputBox(prompt: String?): String {
-        gameInterface.showLibDialog(LibTypeDialog.DIALOG_INPUT, prompt ?: "")
-
-        return try {
-            returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogTextValue ?: ""
-        } catch (_: InterruptedException) {
-            ""
-        }
+        return runCatching {
+            returnValueFuture = CompletableFuture()
+            gameInterface.showLibDialog(
+                dialogType = LibTypeDialog.DIALOG_INPUT,
+                inputString = prompt ?: ""
+            )
+            returnValueFuture.get().dialogTextValue
+        }.getOrDefault("")
     }
 
     override fun onGetMsCount(): Int {
@@ -415,16 +421,14 @@ class QSLibSNXImpl(
     }
 
     override fun onShowMenuNew(): Int {
-        gameInterface.showLibDialog(
-            dialogType = LibTypeDialog.DIALOG_MENU,
-            menuItems = mutableMenuItemList
-        )
-
-        return try {
-            returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogNumValue ?: -1
-        } catch (_: InterruptedException) {
-            super.onShowMenuNew()
-        }
+        return runCatching {
+            returnValueFuture = CompletableFuture()
+            gameInterface.showLibDialog(
+                LibTypeDialog.DIALOG_MENU,
+                menuItems = mutableMenuItemList
+            )
+            returnValueFuture.get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS).dialogNumValue
+        }.getOrDefault(-1)
     }
 
     override fun onSleep(msecs: Int) {

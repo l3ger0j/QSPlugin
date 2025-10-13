@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "org.qp.qsplugin"
+    namespace = "com.pixnpunk.qsplugin"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "org.qp.qsplugin"
+        applicationId = "com.pixnpunk.qsplugin"
         minSdk = 26
         targetSdk = 36
         versionCode = 100000

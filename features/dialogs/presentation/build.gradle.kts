@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "org.qp.dialogs.presentation"
+    namespace = "com.pixnpunk.dialogs.presentation"
     compileSdk = 36
 
     defaultConfig {

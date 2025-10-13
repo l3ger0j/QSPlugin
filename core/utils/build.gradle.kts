@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "org.qp.utils"
+    namespace = "com.pixnpunk.utils"
     compileSdk = 36
 
     defaultConfig {

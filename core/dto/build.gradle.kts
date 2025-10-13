@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "org.qp.dto"
+    namespace = "com.pixnpunk.dto"
     compileSdk = 36
 
     defaultConfig {

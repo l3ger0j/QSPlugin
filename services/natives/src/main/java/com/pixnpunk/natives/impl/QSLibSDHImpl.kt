@@ -14,26 +14,26 @@ import com.anggrayudi.storage.file.MimeType
 import com.anggrayudi.storage.file.child
 import com.anggrayudi.storage.file.getAbsolutePath
 import com.libsdhqs.jni.QSLibSDH
+import com.pixnpunk.natives.SupervisorViewModel.Companion.RECEIVE_FLOW_TIMEOUT
 import kotlinx.coroutines.Runnable
-import org.qp.dto.GameInterface
-import org.qp.dto.LibGameState
-import org.qp.dto.LibGenItem
-import org.qp.dto.LibIProxy
-import org.qp.dto.LibReturnValue
-import org.qp.dto.LibTypeDialog
-import org.qp.dto.LibTypePopup
-import org.qp.dto.LibTypeWindow
-import org.qp.dto.LibUIConfig
-import org.qp.utils.FileUtil.isWritableDir
-import org.qp.utils.FileUtil.isWritableFile
-import org.qp.utils.FileUtil.readFileContents
-import org.qp.utils.FileUtil.writeFileContents
-import org.qp.utils.HtmlUtil.getSrcDir
-import org.qp.utils.HtmlUtil.isContainsHtmlTags
-import org.qp.utils.PathUtil.getFilename
-import org.qp.utils.PathUtil.normalizeContentPath
-import org.qp.utils.ThreadUtil.isSameThread
+import com.pixnpunk.dto.GameInterface
+import com.pixnpunk.dto.LibGameState
+import com.pixnpunk.dto.LibGenItem
+import com.pixnpunk.dto.LibIProxy
+import com.pixnpunk.dto.LibReturnValue
+import com.pixnpunk.dto.LibTypeDialog
+import com.pixnpunk.dto.LibTypePopup
+import com.pixnpunk.dto.LibTypeWindow
+import com.pixnpunk.dto.LibUIConfig
+import com.pixnpunk.utils.FileUtil.isWritableDir
+import com.pixnpunk.utils.FileUtil.isWritableFile
+import com.pixnpunk.utils.HtmlUtil.getSrcDir
+import com.pixnpunk.utils.HtmlUtil.isContainsHtmlTags
+import com.pixnpunk.utils.PathUtil.getFilename
+import com.pixnpunk.utils.PathUtil.normalizeContentPath
+import com.pixnpunk.utils.ThreadUtil.isSameThread
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
@@ -45,7 +45,7 @@ class QSLibSDHImpl(
     private val context: Context,
     override var gameInterface: GameInterface,
     override var gameState: LibGameState = LibGameState(),
-    override val returnValueQueue: ArrayBlockingQueue<LibReturnValue> = ArrayBlockingQueue(1)
+    override var returnValueFuture: CompletableFuture<LibReturnValue> = CompletableFuture()
 ) : QSLibSDH(), LibIProxy {
 
     private val libLock = ReentrantLock()
@@ -78,14 +78,9 @@ class QSLibSDHImpl(
         val gameFileUri = gameState.gameFileUri
         val gameFile = gameFileUri.toDocumentFile(context) ?: return false
         val gameFileFullPath = gameFile.getAbsolutePath(context)
-        val gameData = gameFileUri.readFileContents(context) ?: return false
-
-//        val fd = context.contentResolver
-//            .openFileDescriptor(gameFileUri, "r")
-//            .runCatching { this?.fileDescriptor ?: FileDescriptor() }
-//            .getOrDefault(FileDescriptor())
-
-        return executeQspCommand { loadGameWorldFromData(gameData, gameFileFullPath) }
+        val gameFileDescriptor = context.contentResolver
+            .openFileDescriptor(gameFileUri, "rw")?.detachFd() ?: return false
+        return executeQspCommand { loadGameWorldFromFD(gameFileDescriptor, gameFileFullPath) }
     }
 
     private fun showLastQspError() {
@@ -256,14 +251,10 @@ class QSLibSDHImpl(
             return
         }
 
-        val gameData = uri.readFileContents(context) ?: return
+        val gameFileDescriptor = context.contentResolver
+            .openFileDescriptor(uri, "r")?.detachFd() ?: return
 
-//        val fd = context.contentResolver
-//            .openFileDescriptor(uri, "r")
-//            .runCatching { this?.fileDescriptor ?: FileDescriptor() }
-//            .getOrDefault(FileDescriptor())
-
-        executeQspCommand { openSavedGameFromData(gameData, true) }
+        executeQspCommand { openSavedGameFromFD(gameFileDescriptor, false) }
     }
 
     override fun saveGameState(uri: Uri) {
@@ -272,10 +263,10 @@ class QSLibSDHImpl(
             return
         }
 
-        uri.writeFileContents(
-            context = context,
-            dataToWrite = saveGameAsData(false) ?: return
-        )
+        val gameFileDescriptor = context.contentResolver
+            .openFileDescriptor(uri, "w")?.detachFd() ?: return
+
+        saveGameByFD(gameFileDescriptor, false)
     }
 
     override fun onActionClicked(index: Int) {
@@ -348,15 +339,14 @@ class QSLibSDHImpl(
     }
 
     override fun onIsPlayingFile(path: String?): Boolean {
-        if (path.isNullOrBlank()) {
-            return false
+        return if (path.isNullOrBlank()) {
+            false
         } else {
-            gameInterface.isPlayingFile(path)
-            return try {
-                returnValueQueue.poll(30, TimeUnit.SECONDS)?.playFileState ?: false
-            } catch (_: InterruptedException) {
-                false
-            }
+            runCatching {
+                CompletableFuture
+                    .supplyAsync { gameInterface.isPlayingFile(path) }
+                    .get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS)
+            }.getOrDefault(false)
         }
     }
 
@@ -378,18 +368,19 @@ class QSLibSDHImpl(
         if (filename.isNullOrBlank()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_LOAD)
         } else {
-            gameInterface.requestReceiveFile(filename)
-            try {
-                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
-                if (fileUri != Uri.EMPTY) {
-                    gameInterface.doWithCounterDisabled { loadGameState(fileUri) }
+            runCatching {
+                CompletableFuture
+                    .supplyAsync { gameInterface.requestReceiveFile(filename) }
+                    .get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS)
+            }.onSuccess {
+                if (it != Uri.EMPTY) {
+                    gameInterface.doWithCounterDisabled { loadGameState(it) }
                 } else {
                     gameInterface.showLibDialog(
                         LibTypeDialog.DIALOG_ERROR,
                         "Save file not found"
                     )
                 }
-            } catch (_: InterruptedException) {
             }
         }
     }
@@ -398,33 +389,32 @@ class QSLibSDHImpl(
         if (filename.isNullOrBlank()) {
             gameInterface.showLibPopup(LibTypePopup.POPUP_SAVE)
         } else {
-            gameInterface.requestCreateFile(filename, MimeType.BINARY_FILE)
-            try {
-                val fileUri = returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
-                if (fileUri != Uri.EMPTY) {
-                    saveGameState(fileUri)
+            runCatching {
+                CompletableFuture
+                    .supplyAsync { gameInterface.requestCreateFile(filename, MimeType.BINARY_FILE) }
+                    .get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS)
+            }.onSuccess {
+                if (it != Uri.EMPTY) {
+                    saveGameState(it)
                 } else {
                     gameInterface.showLibDialog(
                         LibTypeDialog.DIALOG_ERROR,
                         "Error access dir"
                     )
                 }
-            } catch (_: InterruptedException) {
             }
         }
     }
 
     override fun onInputBox(prompt: String?): String {
-        gameInterface.showLibDialog(
-            dialogType = LibTypeDialog.DIALOG_INPUT,
-            inputString = prompt ?: ""
-        )
-
-        return try {
-            returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogTextValue ?: ""
-        } catch (_: InterruptedException) {
-            ""
-        }
+        return runCatching {
+            returnValueFuture = CompletableFuture()
+            gameInterface.showLibDialog(
+                dialogType = LibTypeDialog.DIALOG_INPUT,
+                inputString = prompt ?: ""
+            )
+            returnValueFuture.get().dialogTextValue
+        }.getOrDefault("")
     }
 
     override fun onGetMsCount(): Int {
@@ -442,18 +432,16 @@ class QSLibSDHImpl(
     }
 
     override fun onShowMenuOld() {
-        gameInterface.showLibDialog(
-            LibTypeDialog.DIALOG_MENU,
-            menuItems = mutableMenuItemList
-        )
-
         selectMenuItem(
             index =
-                try {
-                    returnValueQueue.poll(30, TimeUnit.SECONDS)?.dialogNumValue ?: -1
-                } catch (_: InterruptedException) {
-                    -1
-                }
+                runCatching {
+                    returnValueFuture = CompletableFuture()
+                    gameInterface.showLibDialog(
+                        LibTypeDialog.DIALOG_MENU,
+                        menuItems = mutableMenuItemList
+                    )
+                    returnValueFuture.get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS).dialogNumValue
+                }.getOrDefault(-1)
         )
     }
 
@@ -472,16 +460,17 @@ class QSLibSDHImpl(
         gameInterface.changeVisWindow(LibTypeWindow.entries[type], isShow)
     }
 
-    override fun onGetFileContents(path: String?): ByteArray? {
-        if (path.isNullOrBlank()) return byteArrayOf()
-        gameInterface.requestReceiveFile(path)
+    override fun onGetFileDesc(path: String?): Int {
+        if (path.isNullOrBlank()) return super.onGetFileDesc(path)
 
-        val targetFileUri = try {
-            returnValueQueue.poll(30, TimeUnit.SECONDS)?.fileUri ?: Uri.EMPTY
-        } catch (_: InterruptedException) {
-            Uri.EMPTY
-        }
-        if (targetFileUri == Uri.EMPTY) return byteArrayOf()
-        return targetFileUri.readFileContents(context)
+        val targetFileUri = runCatching {
+            CompletableFuture
+                .supplyAsync { gameInterface.requestReceiveFile(path) }
+                .get(RECEIVE_FLOW_TIMEOUT, TimeUnit.MILLISECONDS)
+        }.onFailure { println(it) }.getOrDefault(Uri.EMPTY)
+
+        if (targetFileUri == Uri.EMPTY) return super.onGetFileDesc(path)
+        return context.contentResolver
+            .openFileDescriptor(targetFileUri, "r")?.detachFd() ?: super.onGetFileDesc(path)
     }
 }
