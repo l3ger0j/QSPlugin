@@ -4,11 +4,11 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.anggrayudi.storage.file.DocumentFileCompat.doesExist
-import com.anggrayudi.storage.file.DocumentFileCompat.fromFullPath
 import com.anggrayudi.storage.file.child
+import com.anggrayudi.storage.file.getAbsolutePath
 import org.qp.utils.FileUtil.isWritableDir
 import org.qp.utils.FileUtil.isWritableFile
+import java.io.File
 import kotlin.contracts.ExperimentalContracts
 
 object PathUtil {
@@ -17,11 +17,21 @@ object PathUtil {
         return if (idx == -1) this else this.substring(idx + 1)
     }
 
-    fun String.pathToFile(context: Context, rootDir: DocumentFile) =
-        if (doesExist(context, this)) {
-            fromFullPath(context, this)
+    fun String.absToRelPath(context: Context, rootDir: DocumentFile) =
+        if (!this.startsWith('/')) {
+            this
         } else {
+            val rootDirPathAsFile = File(rootDir.getAbsolutePath(context))
+            File(this).toRelativeString(rootDirPathAsFile)
+        }
+
+    fun String.pathToFile(context: Context, rootDir: DocumentFile) =
+        if (!this.startsWith('/')) {
             rootDir.child(context, this)
+        } else {
+            val rootDirPathAsFile = File(rootDir.getAbsolutePath(context))
+            val fullPathAsRelative = File(this).toRelativeString(rootDirPathAsFile)
+            rootDir.child(context, fullPathAsRelative)
         }
 
     @OptIn(ExperimentalContracts::class)
