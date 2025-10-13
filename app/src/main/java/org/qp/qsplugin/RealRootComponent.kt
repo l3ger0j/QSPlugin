@@ -82,7 +82,6 @@ class RealRootComponent(
         source = navigation,
         serializer = null,
         initialConfiguration = ChildConfig.Main,
-        handleBackButton = true,
         childFactory = ::createChild
     )
     override val dialogSlot: Value<ChildSlot<*, DialogsComponent>> =
