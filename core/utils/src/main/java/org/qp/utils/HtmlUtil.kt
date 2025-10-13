@@ -4,7 +4,6 @@ import android.util.Base64
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.safety.Safelist
-import org.qp.dto.LibUIConfig
 import org.qp.dto.GameSettings
 import org.qp.utils.Base64Util.encodeBase64
 import org.qp.utils.ViewUtil.asString
@@ -37,15 +36,15 @@ object HtmlUtil {
     private const val PAGE_BODY_TEMPLATE: String = "<body>REPLACETEXT</body>"
 
     fun appendPageTemplate(settings: GameSettings, body: String): String {
-        val fixBody = body.replaceIndent("<br>")
+        var fixBody = body.replaceIndent("<br>")
 
         if (settings.isUseHtml) {
             if (fixBody.contains("\\\"")) {
-                fixBody.replace("\\\"", "'")
+                fixBody = fixBody.replace("\\\"", "'")
             }
 
             if (EXEC_PATTERN.matcher(fixBody).find()) {
-                fixBody.encodeExec()
+                fixBody = fixBody.encodeExec()
             }
         }
 
