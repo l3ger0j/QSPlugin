@@ -28,31 +28,29 @@ class AudioPlayerViewModel(
     }
 
     private fun runOnAudioContext(block: suspend () -> Unit): Job =
-        viewModelScope.launch(audioDispatcher) {
-            block()
-        }
+        viewModelScope.launch(audioDispatcher) { block() }
 
     override fun onResume(owner: LifecycleOwner) {
-        resume()
-    }
-
-    override fun onPause(owner: LifecycleOwner) {
-        pause()
-    }
-
-    fun resume() {
         if (!isSoundEnabled || !isPaused) return
         runOnAudioContext {
             isPaused = false
-            mediaPlayers.values.filterNot { it.isPlaying }.forEach { it.start() }
+            runCatching {
+                mediaPlayers.values.filterNot { it.isPlaying }.forEach { it.start() }
+            }.onFailure {
+                mediaPlayers.clear()
+            }
         }
     }
 
-    fun pause() {
+    override fun onPause(owner: LifecycleOwner) {
         if (isPaused) return
         runOnAudioContext {
             isPaused = true
-            mediaPlayers.values.filter { it.isPlaying }.forEach { it.pause() }
+            runCatching {
+                mediaPlayers.values.filter { it.isPlaying }.forEach { it.pause() }
+            }.onFailure {
+                mediaPlayers.clear()
+            }
         }
     }
 
