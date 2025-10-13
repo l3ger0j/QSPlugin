@@ -3,6 +3,8 @@ package org.qp.qsplugin
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Process.killProcess
+import android.os.Process.myPid
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -11,9 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.provider.DocumentsContractCompat.buildDocumentUriUsingTree
@@ -153,9 +153,6 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val state = root.model.collectAsState()
-            val windowSizeClass = calculateWindowSizeClass(this)
-
             val stack by root.childStack.subscribeAsState()
             val dialogSlot by root.dialogSlot.subscribeAsState()
             val activeComponent = stack.active.instance
@@ -200,8 +197,7 @@ class MainActivity : ComponentActivity() {
                             component = root,
                             activeComponent = activeComponent,
                             onFinishActivity = {
-                                onBackPressedDispatcher.onBackPressed()
-                                finish()
+                                killProcess(myPid())
                             }
                         )
                     },
