@@ -239,14 +239,14 @@ class RealRootComponent(
             when (uriScheme) {
                 "exec" ->
                     uriDecode.substring(5)
-                        .apply {
-                            if (isBase64()) {
-                                decodeBase64().substring(5)
+                        .let {
+                            if (it.isBase64()) {
+                                it.decodeBase64()
                             } else {
-                                substring(5)
+                                it
                             }
                         }
-                        .also {
+                        .let {
                             if (it.isContainsHtmlTags()) {
                                 store.accept(RootStore.Intent.OnExecCode(it.removeHtmlTags()))
                             } else {
