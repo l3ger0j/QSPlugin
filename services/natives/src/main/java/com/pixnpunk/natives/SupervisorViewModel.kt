@@ -35,6 +35,7 @@ import com.pixnpunk.dto.LibTypeDialog
 import com.pixnpunk.dto.LibTypePopup
 import com.pixnpunk.dto.LibTypeWindow
 import com.pixnpunk.dto.LibUIConfig
+import com.pixnpunk.dto.NativeLibAuthors
 import com.pixnpunk.settings.SettingsRepo
 import com.pixnpunk.utils.FileUtil.isWritableDir
 import com.pixnpunk.utils.FileUtil.isWritableFile
@@ -56,8 +57,8 @@ class SupervisorViewModel(
     private var counterNativeSeedhartaJob: Job? = null
     private var updateSettingsJob: Job? = null
 
-    private val mLibVersion: Int
-        get() = settingsRepo.settingsState.value.nativeLibVersion
+    private val mLibAuthors: NativeLibAuthors
+        get() = settingsRepo.settingsState.value.nativeLibFrom
     private val libNativeByte = QSPLibImpl(context, this)
     private val libNativeSonnix = QSLibSNXImpl(context, this)
     private val libNativeSeedharta = QSLibSDHImpl(context, this)
@@ -111,17 +112,11 @@ class SupervisorViewModel(
 
     fun putReturnValue(returnValue: LibReturnValue) {
         when (mLibVersion) {
-            595 -> {
-                libNativeByte.returnValueFuture.complete(returnValue)
-            }
+            NativeLibAuthors.BYTE -> libNativeByte.returnValueFuture.complete(returnValue)
 
-            575 -> {
-                libNativeSonnix.returnValueFuture.complete(returnValue)
-            }
+            NativeLibAuthors.SONNIX -> libNativeSonnix.returnValueFuture.complete(returnValue)
 
-            570 -> {
-                libNativeSeedharta.returnValueFuture.complete(returnValue)
-            }
+            NativeLibAuthors.SEEDHARTHA -> libNativeSeedharta.returnValueFuture.complete(returnValue)
         }
     }
 
@@ -136,17 +131,17 @@ class SupervisorViewModel(
         gameDirUri = dirUri
 
         when (mLibVersion) {
-            595 -> {
+            NativeLibAuthors.BYTE -> {
                 libNativeByte.startLibThread()
                 libNativeByte.runGame(id, title, dirUri, fileUri)
             }
 
-            575 -> {
+            NativeLibAuthors.SONNIX -> {
                 libNativeSonnix.startLibThread()
                 libNativeSonnix.runGame(id, title, dirUri, fileUri)
             }
 
-            570 -> {
+            NativeLibAuthors.SEEDHARTHA -> {
                 libNativeSeedharta.startLibThread()
                 libNativeSeedharta.runGame(id, title, dirUri, fileUri)
             }
@@ -193,15 +188,15 @@ class SupervisorViewModel(
 
     fun onSaveFile(fileUri: Uri) {
         when (mLibVersion) {
-            595 -> {
+            NativeLibAuthors.BYTE -> {
                 libNativeByte.saveGameState(fileUri)
             }
 
-            575 -> {
+            NativeLibAuthors.SONNIX -> {
                 libNativeSonnix.saveGameState(fileUri)
             }
 
-            570 -> {
+            NativeLibAuthors.SEEDHARTHA -> {
                 libNativeSeedharta.saveGameState(fileUri)
             }
         }
@@ -210,15 +205,15 @@ class SupervisorViewModel(
     fun onLoadFile(fileUri: Uri) {
         doWithCounterDisabled {
             when (mLibVersion) {
-                595 -> {
+                NativeLibAuthors.BYTE -> {
                     libNativeByte.loadGameState(fileUri)
                 }
 
-                575 -> {
+                NativeLibAuthors.SONNIX -> {
                     libNativeSonnix.loadGameState(fileUri)
                 }
 
-                570 -> {
+                NativeLibAuthors.SEEDHARTHA -> {
                     libNativeSeedharta.loadGameState(fileUri)
                 }
             }
@@ -227,15 +222,15 @@ class SupervisorViewModel(
 
     fun onCodeExec(execCode: String) {
         when (mLibVersion) {
-            595 -> {
+            NativeLibAuthors.BYTE -> {
                 libNativeByte.execute(execCode)
             }
 
-            575 -> {
+            NativeLibAuthors.SONNIX -> {
                 libNativeSonnix.execute(execCode)
             }
 
-            570 -> {
+            NativeLibAuthors.SEEDHARTHA -> {
                 libNativeSeedharta.execute(execCode)
             }
         }
@@ -243,16 +238,16 @@ class SupervisorViewModel(
 
     fun onRestartGame() {
         when (mLibVersion) {
-            595 -> {
+            NativeLibAuthors.BYTE -> {
                 libNativeByte.restartGame()
             }
 
-            575 -> {
+            NativeLibAuthors.SONNIX -> {
                 libNativeSonnix.restartGame()
 
             }
 
-            570 -> {
+            NativeLibAuthors.SEEDHARTHA -> {
                 libNativeSeedharta.restartGame()
             }
         }
@@ -260,15 +255,15 @@ class SupervisorViewModel(
 
     fun onActionClicked(index: Int) {
         when (mLibVersion) {
-            595 -> {
+            NativeLibAuthors.BYTE -> {
                 libNativeByte.onActionClicked(index)
             }
 
-            575 -> {
+            NativeLibAuthors.SONNIX -> {
                 libNativeSonnix.onActionClicked(index)
             }
 
-            570 -> {
+            NativeLibAuthors.SEEDHARTHA -> {
                 libNativeSeedharta.onActionClicked(index)
             }
         }
@@ -276,15 +271,15 @@ class SupervisorViewModel(
 
     fun onObjectSelected(index: Int) {
         when (mLibVersion) {
-            595 -> {
+            NativeLibAuthors.BYTE -> {
                 libNativeByte.onObjectSelected(index)
             }
 
-            575 -> {
+            NativeLibAuthors.SONNIX -> {
                 libNativeSonnix.onObjectSelected(index)
             }
 
-            570 -> {
+            NativeLibAuthors.SEEDHARTHA -> {
                 libNativeSeedharta.onObjectSelected(index)
             }
         }
@@ -433,22 +428,22 @@ class SupervisorViewModel(
     }
 
     override fun doWithCounterDisabled(runnable: Runnable) {
-        when (mLibVersion) {
-            595 -> {
+        when (mLibAuthors) {
+            NativeLibAuthors.BYTE -> {
                 counterNativeByteJob?.cancel()
                 runnable.run()
                 counterNativeByteJob =
                     viewModelScope.launch(block = counterNativeByteTask)
             }
 
-            575 -> {
+            NativeLibAuthors.SONNIX -> {
                 counterNativeSonnixJob?.cancel()
                 runnable.run()
                 counterNativeSonnixJob =
                     viewModelScope.launch(block = counterNativeSonnixTask)
             }
 
-            570 -> {
+            NativeLibAuthors.SEEDHARTHA -> {
                 counterNativeSeedhartaJob?.cancel()
                 runnable.run()
                 counterNativeSeedhartaJob =
