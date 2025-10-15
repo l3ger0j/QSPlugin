@@ -18,6 +18,7 @@ android {
         versionCode = 100000
         versionName = "1.0.0-alpha"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        androidResources.localeFilters += listOf("en", "ru")
     }
 
     buildTypes {
