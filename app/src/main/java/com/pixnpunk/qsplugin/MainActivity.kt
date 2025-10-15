@@ -28,17 +28,17 @@ import com.anggrayudi.storage.file.id
 import com.arkivanov.decompose.defaultComponentContext
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import org.koin.android.ext.android.inject
 import com.pixnpunk.audio.AudioPlayerViewModel
 import com.pixnpunk.dialogs.presentation.DialogsMainContent
 import com.pixnpunk.dto.GameSettings
 import com.pixnpunk.extra.presentation.ExtraContent
-import com.pixnpunk.main.presentation.MainContent
 import com.pixnpunk.input.presentation.InputContent
+import com.pixnpunk.main.presentation.MainContent
 import com.pixnpunk.`object`.presentation.ObjectContent
 import com.pixnpunk.qsplugin.mvi.RootStore
 import com.pixnpunk.qsplugin.theme.QSPluginTheme
 import com.pixnpunk.settings.SettingsRepo
+import org.koin.android.ext.android.inject
 import kotlin.concurrent.thread
 
 class MainActivity : ComponentActivity() {

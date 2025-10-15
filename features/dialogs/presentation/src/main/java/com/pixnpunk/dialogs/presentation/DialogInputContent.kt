@@ -55,7 +55,8 @@ fun DialogInputContent(
         Spacer(modifier = Modifier.height(24.dp))
         TextButton(
             onClick = {
-                component.onEnterValue(enterValue)
+                val isBox = component.dialogConfig.isDialogInputBox
+                component.onEnterValue(enterValue to isBox)
                 component.onDismissed()
             },
             modifier = Modifier.align(Alignment.End),

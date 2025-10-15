@@ -9,6 +9,7 @@ object RootReducer : Reducer<RootStore.State, RootStore.Message> {
             is RootStore.Message.UpdateVisExtraElement -> copy(isExtraEnabled = msg.isExtraEnabled)
             is RootStore.Message.UpdateVisInputElement -> copy(isInputEnabled = msg.isInputEnabled)
             is RootStore.Message.UpdateVisObjElement -> copy(isObjectsEnabled = msg.isObjectsEnabled)
+            is RootStore.Message.UpdateExecutorStatus -> copy(isExecutorEnabled = msg.isExecutorEnabled)
             is RootStore.Message.UpdateStateNestedLoad -> copy(inLoadExpanded = msg.newState)
             is RootStore.Message.UpdateStateNestedSave -> copy(isSaveExpanded = msg.newState)
         }

@@ -13,6 +13,7 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
         val isObjectsEnabled: Boolean = true,
         val isExtraEnabled: Boolean = true,
         val isInputEnabled: Boolean = true,
+        val isExecutorEnabled: Boolean = false,
         val isGameRunning: Boolean = false,
         val inLoadExpanded: Boolean = false,
         val isSaveExpanded: Boolean = false
@@ -24,7 +25,7 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
         data class OnLoadFile(val fileUri: Uri) : Intent
         data class OnExecCode(val codeToExec: String) : Intent
         data class OnSelectMenuItem(val index: Int) : Intent
-        data class OnEnterValue(val inputString: String) : Intent
+        data class OnEnterValue(val inputString: String, val isBox: Boolean) : Intent
         data object CreateSaveIntent : Intent
         data object CreateLoadIntent : Intent
         data class ChangeStateNestedLoad(val newState: Boolean) : Intent
@@ -36,6 +37,7 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
         data class UpdateVisObjElement(val isObjectsEnabled: Boolean) : Message
         data class UpdateVisExtraElement(val isExtraEnabled: Boolean) : Message
         data class UpdateVisInputElement(val isInputEnabled: Boolean) : Message
+        data class UpdateExecutorStatus(val isExecutorEnabled: Boolean) : Message
         data class UpdateStateNestedLoad(val newState: Boolean) : Message
         data class UpdateStateNestedSave(val newState: Boolean) : Message
     }
@@ -68,5 +70,6 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
         data object StartGameStateFlow : Action
         data object StartGamePopupFlow : Action
         data object StartGameElementVisFlow : Action
+        data object StartGameSettingsFlow : Action
     }
 }

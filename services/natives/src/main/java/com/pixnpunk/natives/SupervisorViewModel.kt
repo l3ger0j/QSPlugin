@@ -111,7 +111,7 @@ class SupervisorViewModel(
     }
 
     fun putReturnValue(returnValue: LibReturnValue) {
-        when (mLibVersion) {
+        when (mLibAuthors) {
             NativeLibAuthors.BYTE -> libNativeByte.returnValueFuture.complete(returnValue)
 
             NativeLibAuthors.SONNIX -> libNativeSonnix.returnValueFuture.complete(returnValue)
@@ -130,7 +130,7 @@ class SupervisorViewModel(
 
         gameDirUri = dirUri
 
-        when (mLibVersion) {
+        when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.startLibThread()
                 libNativeByte.runGame(id, title, dirUri, fileUri)
@@ -186,8 +186,24 @@ class SupervisorViewModel(
         counterNativeSeedhartaJob?.cancel()
     }
 
+    fun onUseInputArea(inputString: String) {
+        when (mLibAuthors) {
+            NativeLibAuthors.BYTE -> {
+                libNativeByte.onInputAreaClicked(inputString)
+            }
+
+            NativeLibAuthors.SONNIX -> {
+                libNativeSonnix.onInputAreaClicked(inputString)
+            }
+
+            NativeLibAuthors.SEEDHARTHA -> {
+                libNativeSeedharta.onInputAreaClicked(inputString)
+            }
+        }
+    }
+
     fun onSaveFile(fileUri: Uri) {
-        when (mLibVersion) {
+        when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.saveGameState(fileUri)
             }
@@ -204,7 +220,7 @@ class SupervisorViewModel(
 
     fun onLoadFile(fileUri: Uri) {
         doWithCounterDisabled {
-            when (mLibVersion) {
+            when (mLibAuthors) {
                 NativeLibAuthors.BYTE -> {
                     libNativeByte.loadGameState(fileUri)
                 }
@@ -221,7 +237,7 @@ class SupervisorViewModel(
     }
 
     fun onCodeExec(execCode: String) {
-        when (mLibVersion) {
+        when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.execute(execCode)
             }
@@ -237,7 +253,7 @@ class SupervisorViewModel(
     }
 
     fun onRestartGame() {
-        when (mLibVersion) {
+        when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.restartGame()
             }
@@ -254,7 +270,7 @@ class SupervisorViewModel(
     }
 
     fun onActionClicked(index: Int) {
-        when (mLibVersion) {
+        when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.onActionClicked(index)
             }
@@ -270,7 +286,7 @@ class SupervisorViewModel(
     }
 
     fun onObjectSelected(index: Int) {
-        when (mLibVersion) {
+        when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.onObjectSelected(index)
             }

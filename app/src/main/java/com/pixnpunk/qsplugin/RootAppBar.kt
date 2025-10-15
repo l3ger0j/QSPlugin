@@ -22,6 +22,8 @@ fun RootAppBar(
 ) {
     val state by component.model.collectAsState()
 
+    val isInputExecutorVis = state.isInputEnabled || state.isExecutorEnabled
+
     TopAppBar(
         title = {
             Text(
@@ -48,11 +50,20 @@ fun RootAppBar(
                     contentDescription = ""
                 )
             }
-            IconButton(onClick = { component.navigation(RealRootComponent.ChildConfig.Input) }) {
-                Icon(
-                    imageVector = Icons.Filled.Terminal,
-                    contentDescription = ""
-                )
+            if (isInputExecutorVis) {
+                IconButton(onClick = {
+                    if (state.isInputEnabled) {
+                        component.doShowDialogInput()
+                    }
+//                    if (state.isExecutorEnabled) {
+//                        component.navigation(RealRootComponent.ChildConfig.Input)
+//                    }
+                }) {
+                    Icon(
+                        imageVector = Icons.Filled.Terminal,
+                        contentDescription = ""
+                    )
+                }
             }
             if (state.isGameRunning) {
                 RootAppBarMenu(component)

@@ -1,5 +1,6 @@
 package com.pixnpunk.dialogs.presentation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.AlertDialogDefaults
@@ -34,12 +35,16 @@ fun DialogsMainContent(
                 }
 
                 DialogState.DIALOG_PICTURE -> {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(component.dialogConfig.dialogInputString)
-                            .build(),
-                        contentDescription = "Image"
-                    )
+                    if (component.dialogConfig.dialogInputString == Uri.EMPTY.toString()) {
+                        component.onDismissed()
+                    } else {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(component.dialogConfig.dialogInputString)
+                                .build(),
+                            contentDescription = "Image"
+                        )
+                    }
                 }
 
                 DialogState.DIALOG_INPUT -> {

@@ -20,7 +20,7 @@ class RealRootStore(
                 RootStore.Action.StartGamePopupFlow,
                 RootStore.Action.StartGameElementVisFlow
             ),
-            executorFactory = { RootExecutor(get(), get()) },
+            executorFactory = { RootExecutor(get(), get(), get()) },
             reducer = RootReducer
         )
 }

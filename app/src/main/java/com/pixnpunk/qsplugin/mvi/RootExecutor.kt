@@ -26,12 +26,15 @@ import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateStateNestedSave
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisExtraElement
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisInputElement
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisObjElement
+import com.pixnpunk.settings.SettingsRepo
 import com.pixnpunk.utils.PathUtil.getImageUriFromPath
 import com.pixnpunk.utils.PathUtil.normalizeContentPath
+import kotlinx.coroutines.flow.filter
 
 internal class RootExecutor(
     private val appContext: Context,
-    private val service: SupervisorViewModel
+    private val service: SupervisorViewModel,
+    private val settingsRepo: SettingsRepo
 ) : CoroutineExecutor<RootStore.Intent, RootStore.Action, RootStore.State, RootStore.Message, RootStore.Label>() {
     private val outScope = CoroutineScope(Dispatchers.Default)
 
@@ -93,9 +96,13 @@ internal class RootExecutor(
             }
 
             is RootStore.Intent.OnEnterValue -> {
-                service.putReturnValue(
-                    LibReturnValue(dialogTextValue = intent.inputString)
-                )
+                if (intent.isBox) {
+                    service.putReturnValue(
+                        LibReturnValue(dialogTextValue = intent.inputString)
+                    )
+                } else {
+                    service.onUseInputArea(inputString = intent.inputString)
+                }
             }
 
             is RootStore.Intent.StartGameDialogFlow -> {
@@ -217,6 +224,14 @@ internal class RootExecutor(
                                 }
                             }
                         }
+                }
+            }
+
+            is RootStore.Action.StartGameSettingsFlow -> {
+                outScope.launch {
+                    settingsRepo.settingsState
+                        .filter { it.isUseExecString }
+                        .collect { dispatch(RootStore.Message.UpdateExecutorStatus(it.isUseExecString)) }
                 }
             }
         }

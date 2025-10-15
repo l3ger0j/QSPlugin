@@ -94,7 +94,7 @@ class RealRootComponent(
                 componentContext = context,
                 dialogConfig = config,
                 onCleanError = { onCleanError() },
-                onEnterValue = { onEnterValue(it) },
+                onEnterValue = { onEnterValue(it.first, it.second) },
                 onSelMenuItem = { onSelMenuItem(it) },
                 onDismissed = dialogNavigation::dismiss
             )
@@ -120,8 +120,8 @@ class RealRootComponent(
         store.accept(RootStore.Intent.OnSelectMenuItem(index))
     }
 
-    private fun onEnterValue(inputString: String) {
-        store.accept(RootStore.Intent.OnEnterValue(inputString))
+    private fun onEnterValue(inputString: String, isBox: Boolean) {
+        store.accept(RootStore.Intent.OnEnterValue(inputString, isBox))
     }
 
     private fun onCleanError() {
@@ -151,12 +151,22 @@ class RealRootComponent(
         inputString: String,
         dialogState: DialogState
     ) {
-        dialogNavigation.activate(
-            configuration = DialogConfig(
-                dialogState = dialogState,
-                dialogInputString = inputString
+        if (dialogState == DialogState.DIALOG_INPUT) {
+            dialogNavigation.activate(
+                configuration = DialogConfig(
+                    dialogState = dialogState,
+                    dialogInputString = inputString,
+                    isDialogInputBox = true
+                )
             )
-        )
+        } else {
+            dialogNavigation.activate(
+                configuration = DialogConfig(
+                    dialogState = dialogState,
+                    dialogInputString = inputString
+                )
+            )
+        }
     }
 
     override fun doShowDialogMessage(
@@ -189,6 +199,15 @@ class RealRootComponent(
                 dialogState = DialogState.DIALOG_MENU,
                 dialogInputString = inputString,
                 dialogMenuItems = inputListItems
+            )
+        )
+    }
+
+    override fun doShowDialogInput() {
+        dialogNavigation.activate(
+            configuration = DialogConfig(
+                dialogState = DialogState.DIALOG_INPUT,
+                dialogInputString = ""
             )
         )
     }

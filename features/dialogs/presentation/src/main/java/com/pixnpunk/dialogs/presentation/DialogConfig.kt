@@ -7,6 +7,7 @@ import com.pixnpunk.dto.LibGenItem
 data class DialogConfig(
     val dialogState: DialogState,
     val dialogInputString: String,
+    val isDialogInputBox: Boolean = false,
     val isDialogInputError: Boolean = false,
     val dialogInputErrorString: String = "",
     val dialogMenuItems: List<LibGenItem> = emptyList()
