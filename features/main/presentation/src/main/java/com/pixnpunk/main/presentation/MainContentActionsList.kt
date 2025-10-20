@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pixnpunk.dto.GameSettings
 import com.pixnpunk.dto.LibGenItem
+import com.pixnpunk.utils.ViewUtil.toTypeface
 
 @Composable
 fun MainContentActionsList(
@@ -76,7 +77,7 @@ fun MainContentActionsList(
                             style = LocalTextStyle.current.copy(
                                 color = Color(settings.textColor),
                                 fontSize = settings.fontSize.sp,
-                                fontFamily = FontFamily(settings.typeface),
+                                fontFamily = FontFamily(settings.typeface.toTypeface()),
                                 background = Color(settings.backColor)
                             )
                         )

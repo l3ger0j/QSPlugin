@@ -33,7 +33,7 @@ class ExtraExecutor(
                                             settings,
                                             state.varsDesc
                                         ).let { s ->
-                                            if (settings.isImageDisabled) {
+                                            if (settings.isImgLoadDis) {
                                                 s.getCleanHtmlRemMedia()
                                             } else {
                                                 s.getCleanHtmlAndMedia(settings)

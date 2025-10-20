@@ -38,6 +38,7 @@ import com.pixnpunk.`object`.presentation.ObjectContent
 import com.pixnpunk.qsplugin.mvi.RootStore
 import com.pixnpunk.qsplugin.theme.QSPluginTheme
 import com.pixnpunk.settings.SettingsRepo
+import kotlinx.serialization.json.Json
 import org.koin.android.ext.android.inject
 import kotlin.concurrent.thread
 
@@ -104,7 +105,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycle.addObserver(audioPlayer)
 
-        if (settingsRepo.settingsState.value.isUseImmersiveMode) {
+        if (settingsRepo.settingsState.value.isImmersModeEnabled) {
             val windowInsetsController =
                 WindowCompat.getInsetsController(window, window.decorView)
             windowInsetsController.systemBarsBehavior =
@@ -132,7 +133,10 @@ class MainActivity : ComponentActivity() {
                 gameTitle = it.getStringExtra(EXTRA_GAME_TITLE) ?: "Title"
                 gameDirUri = it.getParcelableExtra(EXTRA_GAME_DIR_URI) ?: Uri.EMPTY
                 gameFileUri = it.getParcelableExtra(EXTRA_GAME_FILE_URI) ?: Uri.EMPTY
-                settingsRepo.emitValue(it.getParcelableExtra(EXTRA_GAME_SETTINGS) ?: GameSettings())
+                val gameSettingsString = it.getStringExtra(EXTRA_GAME_SETTINGS)
+                if (gameSettingsString != null) {
+                    settingsRepo.emitValue(Json.decodeFromString<GameSettings>(gameSettingsString))
+                }
             }
         }
 

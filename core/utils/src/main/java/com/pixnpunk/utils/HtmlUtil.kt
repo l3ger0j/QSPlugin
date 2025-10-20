@@ -1,12 +1,11 @@
 package com.pixnpunk.utils
 
 import android.util.Base64
+import com.pixnpunk.dto.GameSettings
+import com.pixnpunk.utils.Base64Util.encodeBase64
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.safety.Safelist
-import com.pixnpunk.dto.GameSettings
-import com.pixnpunk.utils.Base64Util.encodeBase64
-import com.pixnpunk.utils.ViewUtil.asString
 import java.util.regex.Pattern
 
 object HtmlUtil {
@@ -52,7 +51,7 @@ object HtmlUtil {
             .replace("QSPTEXTCOLOR", settings.textColor.toHexString())
             .replace("QSPBACKCOLOR", settings.backColor.toHexString())
             .replace("QSPLINKCOLOR", settings.linkColor.toHexString())
-            .replace("QSPFONTSTYLE", settings.typeface.asString())
+            .replace("QSPFONTSTYLE", settings.typeface.name.lowercase())
             .replace("QSPFONTSIZE", settings.fontSize.toString())
 
         return pageHeadTemplate + PAGE_BODY_TEMPLATE.replace("REPLACETEXT", fixBody)
@@ -149,14 +148,14 @@ object HtmlUtil {
         }
 
         this.select("img").forEach { img: Element ->
-            if (settings.isUseAutoWidth && settings.isUseAutoHeight) {
+            if (settings.isAutoWidthImage && settings.isAutoHeightImage) {
                 img.attr("style", "display: inline; height: auto; max-width: 100%;")
             } else {
-                if (!settings.isUseAutoWidth) {
-                    img.attr("style", "max-width: ${settings.customWidthImage};")
+                if (!settings.isAutoWidthImage) {
+                    img.attr("style", "max-width: ${settings.imageWidth};")
                 }
-                if (!settings.isUseAutoHeight) {
-                    img.attr("style", "max-height: ${settings.customHeightImage};")
+                if (!settings.isAutoHeightImage) {
+                    img.attr("style", "max-height: ${settings.imageHeight};")
                 }
             }
         }

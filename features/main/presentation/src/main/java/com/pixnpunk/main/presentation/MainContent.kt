@@ -24,7 +24,7 @@ fun MainContent(component: MainComponent) {
         BottomSheetScaffold(
             sheetContent = {
                 MainContentActionsList(
-                    countActsVis = settings.countActsVis,
+                    countActsVis = settings.visActsCount,
                     settings = settings,
                     actions = state.actions,
                     onActionClicked = component.onActionClicked

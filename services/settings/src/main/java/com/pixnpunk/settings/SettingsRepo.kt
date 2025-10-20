@@ -6,13 +6,14 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import com.pixnpunk.dto.GameSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import com.pixnpunk.dto.GameSettings
+import kotlinx.serialization.json.Json
 
 class SettingsRepo(
     private val appContext: Context
@@ -33,11 +34,11 @@ class SettingsRepo(
 
     private inner class ApplicationSettingsReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == "org.qp.settings.ACTION_SETTINGS_UPDATE") {
-                val settings = intent.getParcelableExtra<GameSettings>("qapplicationSettings")
-                if (settings != null) {
+            if (intent.action == "com.pixnpunk.settings.ACTION_SETTINGS_UPDATE") {
+                val gameSettingsString = intent.getStringExtra("gameAppSettings")
+                if (gameSettingsString != null) {
                     scope.launch {
-                        _settingsState.emit(settings)
+                        _settingsState.emit(Json.decodeFromString<GameSettings>(gameSettingsString))
                     }
                 }
             }

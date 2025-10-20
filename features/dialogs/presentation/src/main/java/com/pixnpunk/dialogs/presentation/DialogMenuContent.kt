@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pixnpunk.utils.ViewUtil.toTypeface
 
 @Composable
 fun DialogMenuContent(
@@ -49,7 +50,7 @@ fun DialogMenuContent(
                             style = LocalTextStyle.current.copy(
                                 color = Color(settings.textColor),
                                 fontSize = settings.fontSize.sp,
-                                fontFamily = FontFamily(settings.typeface),
+                                fontFamily = FontFamily(settings.typeface.toTypeface()),
                                 background = Color(settings.backColor)
                             )
                         )
