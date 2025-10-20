@@ -457,7 +457,15 @@ class QSLibSDHImpl(
     }
 
     override fun onShowWindow(type: Int, isShow: Boolean) {
-        gameInterface.changeVisWindow(LibTypeWindow.entries[type], isShow)
+        gameInterface.changeVisWindow(
+            when (type) {
+                0 -> LibTypeWindow.ACTS
+                1 -> LibTypeWindow.OBJS
+                2 -> LibTypeWindow.VARS
+                3 -> LibTypeWindow.INPUT
+                else -> LibTypeWindow.MAIN
+            }, isShow
+        )
     }
 
     override fun onGetFileDesc(path: String?): Int {
