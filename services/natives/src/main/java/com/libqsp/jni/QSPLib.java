@@ -30,16 +30,52 @@ public abstract class QSPLib {
         LOOPWHILENOTFOUND
     }
 
-    public enum Window {
-        ACTS,
-        OBJS,
-        VARS,
-        INPUT
+    public final class Window {
+        public static final int MAIN  = 1 << 0;
+        public static final int VARS  = 1 << 1;
+        public static final int ACTS  = 1 << 2;
+        public static final int OBJS  = 1 << 3;
+        public static final int INPUT = 1 << 4;
+        public static final int VIEW  = 1 << 5;
+
+        private int value;
+
+        public Window() {
+            this.value = 0;
+        }
+
+        public Window(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public boolean isSet(int flags) {
+            return (value & flags) == flags;
+        }
+
+        public Window set(int flags) {
+            value |= flags;
+            return this;
+        }
+
+        public Window clear(int flags) {
+            value &= ~flags;
+            return this;
+        }
     }
 
     public class ListItem {
-        public String image;
         public String name;
+        public String image;
+    }
+
+    public class ObjectItem {
+        public String name;
+        public String title;
+        public String image;
     }
 
     public class ExecutionState {
@@ -72,20 +108,17 @@ public abstract class QSPLib {
     public native String getVersion();
     public native String getCompiledDateTime();
     public native String getMainDesc();
-    public native boolean isMainDescChanged();
     public native String getVarsDesc();
-    public native boolean isVarsDescChanged();
     public native void setInputStrText(String value);
     public native ListItem[] getActions();
     public native boolean setSelActIndex(int index, boolean toRefreshUI);
     public native boolean execSelAction(boolean toRefreshUI);
     public native int getSelActIndex();
-    public native boolean isActsChanged();
-    public native ListItem[] getObjects();
+    public native ObjectItem[] getObjects();
     public native boolean setSelObjIndex(int index, boolean toRefreshUI);
     public native int getSelObjIndex();
-    public native boolean isObjsChanged();
-    public native void showWindow(int type /* Window.ordinal() */, boolean toShow);
+    public native int getWindowsChangedState(); /* Window bit flags */
+    public native void showWindow(int type /* Window bit flags */, boolean toShow);
     public native int getVarValuesCount(String name);
     public native int getVarIndexByString(String name, String str);
     /*
@@ -113,7 +146,7 @@ public abstract class QSPLib {
     public void onPlayFile(String file, int volume) {}
     public void onCloseFile(String file) {}
     public void onShowImage(String file) {}
-    public void onShowWindow(int type /* Window.ordinal() */, boolean toShow) {}
+    public void onShowWindow(int type /* Window bit flags */, boolean toShow) {}
     public int onShowMenu(ListItem[] items) { return -1; }
     public void onShowMessage(String text) {}
     public void onRefreshInt(boolean isForced, boolean isNewDesc) {}
@@ -121,6 +154,7 @@ public abstract class QSPLib {
     public void onSetInputStrText(String text) {}
     public void onSystem(String cmd) {}
     public void onOpenGame(String file, boolean isNewGame) {}
+    public void onInitGame(boolean isNewGame) {}
     public void onOpenGameStatus(String file) {}
     public void onSaveGameStatus(String file) {}
     public void onSleep(int msecs) {}

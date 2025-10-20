@@ -13,7 +13,6 @@ import com.anggrayudi.storage.file.DocumentFileCompat.fromUri
 import com.anggrayudi.storage.file.MimeType
 import com.anggrayudi.storage.file.child
 import com.libqsp.jni.QSPLib
-import com.pixnpunk.natives.SupervisorViewModel.Companion.RECEIVE_FLOW_TIMEOUT
 import com.pixnpunk.dto.GameInterface
 import com.pixnpunk.dto.LibGameState
 import com.pixnpunk.dto.LibGenItem
@@ -23,6 +22,7 @@ import com.pixnpunk.dto.LibTypeDialog
 import com.pixnpunk.dto.LibTypePopup
 import com.pixnpunk.dto.LibTypeWindow
 import com.pixnpunk.dto.LibUIConfig
+import com.pixnpunk.natives.SupervisorViewModel.Companion.RECEIVE_FLOW_TIMEOUT
 import com.pixnpunk.utils.FileUtil.isWritableDir
 import com.pixnpunk.utils.FileUtil.isWritableFile
 import com.pixnpunk.utils.FileUtil.readFileContents
@@ -430,7 +430,17 @@ class QSPLibImpl(
     }
 
     override fun onShowWindow(type: Int, toShow: Boolean) {
-        gameInterface.changeVisWindow(LibTypeWindow.entries[type], toShow)
+        gameInterface.changeVisWindow(
+            when (type) {
+                Window.MAIN -> LibTypeWindow.MAIN
+                Window.VARS -> LibTypeWindow.VARS
+                Window.ACTS -> LibTypeWindow.ACTS
+                Window.OBJS -> LibTypeWindow.OBJS
+                Window.INPUT -> LibTypeWindow.INPUT
+                Window.VIEW -> LibTypeWindow.VIEW
+                else -> LibTypeWindow.MAIN
+            }, toShow
+        )
     }
 
     override fun onOpenGame(file: String?, isNewGame: Boolean) {

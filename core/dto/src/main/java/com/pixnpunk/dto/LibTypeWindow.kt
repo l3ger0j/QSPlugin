@@ -1,8 +1,10 @@
 package com.pixnpunk.dto
 
 enum class LibTypeWindow {
-    ACTIONS,
-    OBJECTS,
-    VARIABLES,
-    INPUT
+    MAIN,
+    VARS,
+    ACTS,
+    OBJS,
+    INPUT,
+    VIEW
 }

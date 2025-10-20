@@ -34,7 +34,7 @@ class MainExecutor(
             is MainStore.Action.StartActionsVisFlow -> {
                 outScope.launch {
                     service.gameElementVis
-                        .filter { it -> it.first == LibTypeWindow.ACTIONS }
+                        .filter { it -> it.first == LibTypeWindow.ACTS }
                         .collect { vis ->
                             scope.launch { dispatch(UpdateVisActions(vis.second)) }
                         }

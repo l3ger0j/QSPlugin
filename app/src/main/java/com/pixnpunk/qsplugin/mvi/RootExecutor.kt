@@ -198,16 +198,16 @@ internal class RootExecutor(
             is RootStore.Action.StartGameElementVisFlow -> {
                 outScope.launch {
                     service.gameElementVis
-                        .filterNot { (window, _) -> window == LibTypeWindow.ACTIONS }
+                        .filterNot { (window, _) -> window == LibTypeWindow.ACTS }
                         .collect { (window, bool) ->
                             when (window) {
-                                LibTypeWindow.OBJECTS -> {
+                                LibTypeWindow.OBJS -> {
                                     scope.launch {
                                         dispatch(UpdateVisObjElement(bool))
                                     }
                                 }
 
-                                LibTypeWindow.VARIABLES -> {
+                                LibTypeWindow.VARS -> {
                                     scope.launch {
                                         dispatch(UpdateVisExtraElement(bool))
                                     }
