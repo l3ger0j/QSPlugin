@@ -24,9 +24,6 @@ sealed interface RootComponent {
 
     fun navigation(child: ChildConfig)
 
-    fun setStateNestedSave(newState: Boolean)
-    fun setStateNestedLoad(newState: Boolean)
-
     fun runGame(
         gameId: Long,
         gameTitle: String,

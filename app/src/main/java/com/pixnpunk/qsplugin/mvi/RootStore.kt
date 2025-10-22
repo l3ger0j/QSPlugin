@@ -3,9 +3,9 @@ package com.pixnpunk.qsplugin.mvi
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.arkivanov.mvikotlin.core.store.Store
-import kotlinx.serialization.Serializable
 import com.pixnpunk.dialogs.presentation.DialogState
 import com.pixnpunk.dto.LibGenItem
+import kotlinx.serialization.Serializable
 
 sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.Label> {
     @Serializable
@@ -15,8 +15,6 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
         val isInputEnabled: Boolean = true,
         val isExecutorEnabled: Boolean = false,
         val isGameRunning: Boolean = false,
-        val inLoadExpanded: Boolean = false,
-        val isSaveExpanded: Boolean = false
     )
 
     sealed interface Intent {
@@ -28,8 +26,6 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
         data class OnEnterValue(val inputString: String, val isBox: Boolean) : Intent
         data object CreateSaveIntent : Intent
         data object CreateLoadIntent : Intent
-        data class ChangeStateNestedLoad(val newState: Boolean) : Intent
-        data class ChangeStateNestedSave(val newState: Boolean) : Intent
     }
 
     sealed interface Message {
@@ -38,8 +34,6 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
         data class UpdateVisExtraElement(val isExtraEnabled: Boolean) : Message
         data class UpdateVisInputElement(val isInputEnabled: Boolean) : Message
         data class UpdateExecutorStatus(val isExecutorEnabled: Boolean) : Message
-        data class UpdateStateNestedLoad(val newState: Boolean) : Message
-        data class UpdateStateNestedSave(val newState: Boolean) : Message
     }
 
     sealed interface Label {

@@ -134,14 +134,6 @@ class RealRootComponent(
         )
     }
 
-    override fun setStateNestedLoad(newState: Boolean) {
-        store.accept(RootStore.Intent.ChangeStateNestedLoad(newState))
-    }
-
-    override fun setStateNestedSave(newState: Boolean) {
-        store.accept(RootStore.Intent.ChangeStateNestedSave(newState))
-    }
-
     @OptIn(DelicateDecomposeApi::class)
     override fun navigation(child: ChildConfig) {
         navigation.bringToFront(child)

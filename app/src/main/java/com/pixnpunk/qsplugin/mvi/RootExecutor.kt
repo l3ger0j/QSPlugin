@@ -21,8 +21,6 @@ import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowDialogMessage
 import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowLoadFileActivity
 import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowSaveFileActivity
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateGameStatus
-import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateStateNestedLoad
-import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateStateNestedSave
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisExtraElement
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisInputElement
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisObjElement
@@ -40,14 +38,6 @@ internal class RootExecutor(
 
     override fun executeIntent(intent: RootStore.Intent) {
         when (intent) {
-            is RootStore.Intent.ChangeStateNestedLoad -> {
-                dispatch(UpdateStateNestedLoad(intent.newState))
-            }
-
-            is RootStore.Intent.ChangeStateNestedSave -> {
-                dispatch(UpdateStateNestedSave(intent.newState))
-            }
-
             is RootStore.Intent.CreateLoadIntent -> {
                 publish(ShowLoadFileActivity(
                     Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
