@@ -51,11 +51,11 @@ sealed interface RootStore : Store<RootStore.Intent, RootStore.State, RootStore.
             val dialogState: DialogState
         ) : Label
 
-        data class ShowSaveFileActivity(
+        data class ShowSaveFilePicker(
             val intent: android.content.Intent
         ) : Label
 
-        data class ShowLoadFileActivity(
+        data class ShowLoadFilePicker(
             val intent: android.content.Intent
         ) : Label
     }

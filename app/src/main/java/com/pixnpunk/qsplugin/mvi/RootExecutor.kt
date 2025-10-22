@@ -18,8 +18,8 @@ import com.pixnpunk.dto.LibTypeWindow
 import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowDialogDefault
 import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowDialogMenu
 import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowDialogMessage
-import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowLoadFileActivity
-import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowSaveFileActivity
+import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowLoadFilePicker
+import com.pixnpunk.qsplugin.mvi.RootStore.Label.ShowSaveFilePicker
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateGameStatus
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisExtraElement
 import com.pixnpunk.qsplugin.mvi.RootStore.Message.UpdateVisInputElement
@@ -39,7 +39,7 @@ internal class RootExecutor(
     override fun executeIntent(intent: RootStore.Intent) {
         when (intent) {
             is RootStore.Intent.CreateLoadIntent -> {
-                publish(ShowLoadFileActivity(
+                publish(ShowLoadFilePicker(
                     Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                         addCategory(Intent.CATEGORY_OPENABLE)
                         putExtra(Intent.ACTION_GET_CONTENT, true)
@@ -49,7 +49,7 @@ internal class RootExecutor(
             }
 
             is RootStore.Intent.CreateSaveIntent -> {
-                publish(ShowSaveFileActivity(
+                publish(ShowSaveFilePicker(
                     Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                         addCategory(Intent.CATEGORY_OPENABLE)
                         putExtra(
@@ -156,7 +156,7 @@ internal class RootExecutor(
                         when (type) {
                             LibTypePopup.POPUP_SAVE -> {
                                 scope.launch {
-                                    publish(ShowSaveFileActivity(
+                                    publish(ShowSaveFilePicker(
                                         Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                                             addCategory(Intent.CATEGORY_OPENABLE)
                                             putExtra(
@@ -171,7 +171,7 @@ internal class RootExecutor(
 
                             LibTypePopup.POPUP_LOAD -> {
                                 scope.launch {
-                                    publish(ShowLoadFileActivity(
+                                    publish(ShowLoadFilePicker(
                                         Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                                             addCategory(Intent.CATEGORY_OPENABLE)
                                             putExtra(Intent.ACTION_GET_CONTENT, true)
