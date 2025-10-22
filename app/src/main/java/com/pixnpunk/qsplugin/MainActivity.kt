@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
     private val audioPlayer: AudioPlayerViewModel by inject()
     private val settingsRepo: SettingsRepo by inject()
 
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 
     private val requestFolderAccess: ActivityResultLauncher<Uri?> =
         registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
@@ -146,7 +146,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        scope.launch {
+        mainScope.launch {
             root.label.collect {
                 when (it) {
                     is RootStore.Label.ShowDialogDefault -> root.doShowDefaultDialog(
@@ -186,7 +186,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        scope.cancel()
+        mainScope.cancel()
         super.onDestroy()
     }
 }
