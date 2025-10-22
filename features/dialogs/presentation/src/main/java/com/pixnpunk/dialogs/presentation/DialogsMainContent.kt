@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.size.Scale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +42,7 @@ fun DialogsMainContent(
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(component.dialogConfig.dialogInputString)
+                                .scale(Scale.FILL)
                                 .build(),
                             contentDescription = "Image"
                         )
