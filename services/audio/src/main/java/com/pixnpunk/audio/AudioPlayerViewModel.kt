@@ -15,10 +15,8 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
-class AudioPlayerViewModel(
+class AudioPlayerViewModel: ViewModel(), DefaultLifecycleObserver {
     private val audioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : ViewModel(), DefaultLifecycleObserver {
-
     private val mediaPlayers = ConcurrentHashMap<Uri, MediaPlayer>()
     private var isPaused = false
     var isSoundEnabled = true
