@@ -32,7 +32,6 @@ fun RootAppBar(
                     is RootComponent.Child.MainChild -> stringResource(R.string.tab_main)
                     is RootComponent.Child.ExtraChild -> stringResource(R.string.tab_extra)
                     is RootComponent.Child.ObjectChild -> stringResource(R.string.tab_object)
-                    is RootComponent.Child.InputChild -> stringResource(R.string.tab_input)
                 }
             )
         },

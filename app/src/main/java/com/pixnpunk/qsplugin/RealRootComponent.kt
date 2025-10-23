@@ -34,12 +34,6 @@ import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.extensions.coroutines.labels
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
-import com.pixnpunk.natives.SupervisorViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.Serializable
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import com.pixnpunk.dialogs.presentation.DialogConfig
 import com.pixnpunk.dialogs.presentation.DialogState
 import com.pixnpunk.dialogs.presentation.DialogsComponent
@@ -47,7 +41,7 @@ import com.pixnpunk.dialogs.presentation.RealDialogsComponent
 import com.pixnpunk.dto.LibGenItem
 import com.pixnpunk.extra.presentation.RealExtraComponent
 import com.pixnpunk.main.presentation.RealMainComponent
-import com.pixnpunk.input.presentation.RealInputComponent
+import com.pixnpunk.natives.SupervisorViewModel
 import com.pixnpunk.`object`.presentation.RealObjectComponent
 import com.pixnpunk.qsplugin.mvi.RealRootStore
 import com.pixnpunk.qsplugin.mvi.RootStore
@@ -57,7 +51,12 @@ import com.pixnpunk.utils.FileUtil.isWritableDir
 import com.pixnpunk.utils.FileUtil.isWritableFile
 import com.pixnpunk.utils.HtmlUtil.isContainsHtmlTags
 import com.pixnpunk.utils.HtmlUtil.removeHtmlTags
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.io.FileNotFoundException
 import kotlin.contracts.ExperimentalContracts
 
@@ -364,14 +363,6 @@ class RealRootComponent(
                 )
             )
         }
-
-        is ChildConfig.Input -> {
-            RootComponent.Child.InputChild(
-                RealInputComponent(
-                    componentContext = componentContext
-                )
-            )
-        }
     }
 
     @Serializable
@@ -384,8 +375,5 @@ class RealRootComponent(
 
         @Serializable
         data object Object : ChildConfig()
-
-        @Serializable
-        data object Input : ChildConfig()
     }
 }

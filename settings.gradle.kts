@@ -21,24 +21,19 @@ dependencyResolutionManagement {
 
 rootProject.name = "QSPlugin"
 
-include(":app")
-
 include(
+    ":app",
+
     ":core",
     ":core:utils",
-    ":core:dto"
-)
+    ":core:dto",
 
-include(
     ":features",
     ":features:main:presentation",
     ":features:extra:presentation",
     ":features:object:presentation",
-    ":features:input:presentation",
-    ":features:dialogs:presentation"
-)
+    ":features:dialogs:presentation",
 
-include(
     ":services",
     ":services:audio",
     ":services:natives",

@@ -59,7 +59,6 @@ dependencies {
     implementation(project(":features:main:presentation"))
     implementation(project(":features:extra:presentation"))
     implementation(project(":features:object:presentation"))
-    implementation(project(":features:input:presentation"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
