@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">QSPlugin</string>
 
-    <string name="tab_extra">Детали</string>
-    <string name="tab_main">Основное</string>
+    <string name="tab_extra">Экстра</string>
+    <string name="tab_main">Главное</string>
     <string name="tab_object">Инвентарь</string>
     <string name="tab_input">Ввод</string>
 

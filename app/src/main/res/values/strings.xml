@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">QSPlugin</string>
 
-    <string name="tab_extra">Details</string>
+    <string name="tab_extra">Extra</string>
     <string name="tab_main">Main</string>
     <string name="tab_object">Inventory</string>
     <string name="tab_input">Input</string>
