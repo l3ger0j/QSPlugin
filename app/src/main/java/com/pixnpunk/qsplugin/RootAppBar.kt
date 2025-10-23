@@ -12,6 +12,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,10 +29,10 @@ fun RootAppBar(
         title = {
             Text(
                 when (activeComponent) {
-                    is RootComponent.Child.MainChild -> "Main"
-                    is RootComponent.Child.ExtraChild -> "Extra"
-                    is RootComponent.Child.ObjectChild -> "Object"
-                    is RootComponent.Child.InputChild -> "Input"
+                    is RootComponent.Child.MainChild -> stringResource(R.string.tab_main)
+                    is RootComponent.Child.ExtraChild -> stringResource(R.string.tab_extra)
+                    is RootComponent.Child.ObjectChild -> stringResource(R.string.tab_object)
+                    is RootComponent.Child.InputChild -> stringResource(R.string.tab_input)
                 }
             )
         },
@@ -39,7 +40,7 @@ fun RootAppBar(
             IconButton(onClick = onFinishActivity) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = ""
+                    contentDescription = stringResource(R.string.act_exit)
                 )
             }
         },
@@ -47,7 +48,7 @@ fun RootAppBar(
             IconButton(onClick = { component.restartGame() }) {
                 Icon(
                     imageVector = Icons.Default.RestartAlt,
-                    contentDescription = ""
+                    contentDescription = stringResource(R.string.act_restart)
                 )
             }
             if (isInputExecutorVis) {

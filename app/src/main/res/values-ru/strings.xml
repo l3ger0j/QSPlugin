@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QSPlugin</string>
+
+    <string name="tab_extra">Детали</string>
+    <string name="tab_main">Основное</string>
+    <string name="tab_object">Инвентарь</string>
+    <string name="tab_input">Ввод</string>
+
+    <string name="act_save">Сохранить игру в файл</string>
+    <string name="act_load">Загрузить игру из файла</string>
+    <string name="act_restart">Перезапустить игру</string>
+    <string name="act_exit">Выйти из приложения</string>
+
+</resources>

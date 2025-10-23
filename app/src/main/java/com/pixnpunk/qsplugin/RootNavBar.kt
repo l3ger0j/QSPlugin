@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun RootNavBar(
@@ -37,7 +38,7 @@ fun RootNavBar(
 
                 }
             },
-            label = { Text("Extra") },
+            label = { Text(stringResource(R.string.tab_extra)) },
             alwaysShowLabel = false,
             onClick = { component.navigation(RealRootComponent.ChildConfig.Extra) },
             selected = activeComponent is RootComponent.Child.ExtraChild,
@@ -50,7 +51,7 @@ fun RootNavBar(
                     Icon(Icons.Filled.Menu, contentDescription = "")
                 }
             },
-            label = { Text("Main") },
+            label = { Text(stringResource(R.string.tab_main)) },
             alwaysShowLabel = false,
             onClick = { component.navigation(RealRootComponent.ChildConfig.Main) },
             selected = activeComponent is RootComponent.Child.MainChild,
@@ -68,7 +69,7 @@ fun RootNavBar(
                     }
                 }
             },
-            label = { Text("Object") },
+            label = { Text(stringResource(R.string.tab_object)) },
             alwaysShowLabel = false,
             onClick = { component.navigation(RealRootComponent.ChildConfig.Object) },
             selected = activeComponent is RootComponent.Child.ObjectChild,

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun RootAppBarMenu(
@@ -18,7 +19,7 @@ fun RootAppBarMenu(
             IconButton(onClick = component::doCreateSaveIntent) {
                 Icon(
                     imageVector = Icons.Default.Download,
-                    contentDescription = ""
+                    contentDescription = stringResource(R.string.act_save)
                 )
             }
         }
@@ -26,7 +27,7 @@ fun RootAppBarMenu(
             IconButton(onClick = component::doCreateLoadIntent) {
                 Icon(
                     imageVector = Icons.Default.Upload,
-                    contentDescription = ""
+                    contentDescription = stringResource(R.string.act_load)
                 )
             }
         }
