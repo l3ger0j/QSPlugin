@@ -25,7 +25,7 @@ FetchContent_MakeAvailable(qslibsnx-external)
 
 FetchContent_Declare(qslibsdh-external
         GIT_REPOSITORY https://github.com/l3ger0j/QSLibSDH.git
-        GIT_TAG 02af54cc789f03f50f5be9101fb1fab58f1f06ba
+        GIT_TAG e7a084b7a9b70279f87047e8ff78056829f9f55f
         GIT_PROGRESS true
         SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-download"
         SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-src"
