@@ -100,11 +100,11 @@ class RealRootComponent(
         }
 
     fun onSaveFileResult(fileUri: Uri) {
-        store.accept(RootStore.Intent.OnLoadFile(fileUri))
+        store.accept(RootStore.Intent.OnSaveFile(fileUri))
     }
 
     fun onLoadFileResult(fileUri: Uri) {
-        store.accept(RootStore.Intent.OnSaveFile(fileUri))
+        store.accept(RootStore.Intent.OnLoadFile(fileUri))
     }
 
     override fun doCreateSaveIntent() {
