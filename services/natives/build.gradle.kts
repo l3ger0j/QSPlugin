@@ -20,7 +20,10 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments += listOf("-DBUILD_JAVA=1", "-DBUILD_JVM=1", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+                arguments += listOf(
+                    "-DBUILD_JAVA=1", "-DBUILD_JVM=1",
+                    "-DBUILD_PRIVATE_CONTENT=0", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+                )
             }
         }
     }
