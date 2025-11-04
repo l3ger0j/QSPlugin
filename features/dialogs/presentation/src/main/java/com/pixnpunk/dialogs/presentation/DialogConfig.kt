@@ -6,7 +6,7 @@ import com.pixnpunk.dto.LibGenItem
 @Serializable
 data class DialogConfig(
     val dialogState: DialogState,
-    val dialogInputString: String,
+    val dialogInputString: String = "",
     val isDialogInputBox: Boolean = false,
     val isDialogInputError: Boolean = false,
     val dialogInputErrorString: String = "",

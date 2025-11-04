@@ -31,11 +31,16 @@ fun DialogsMainContent(
             tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             when (component.dialogConfig.dialogState) {
-                DialogState.DIALOG_ERROR, DialogState.DIALOG_MESSAGE -> {
+                DialogState.DIALOG_ERROR, DialogState.DIALOG_MESSAGE ->
                     DialogOutputContent(component)
-                }
 
-                DialogState.DIALOG_PICTURE -> {
+                DialogState.DIALOG_PERMISSION ->
+                    DialogPermissionContent(
+                        onConfirm = component.onConfirmPerm,
+                        onDismiss = component.onDismissed
+                    )
+
+                DialogState.DIALOG_PICTURE ->
                     if (component.dialogConfig.dialogInputString == Uri.EMPTY.toString()) {
                         component.onDismissed()
                     } else {
@@ -47,15 +52,10 @@ fun DialogsMainContent(
                             contentDescription = "Image"
                         )
                     }
-                }
 
-                DialogState.DIALOG_INPUT -> {
-                    DialogInputContent(component)
-                }
+                DialogState.DIALOG_INPUT -> DialogInputContent(component)
 
-                DialogState.DIALOG_MENU -> {
-                    DialogMenuContent(component)
-                }
+                DialogState.DIALOG_MENU -> DialogMenuContent(component)
             }
         }
     }

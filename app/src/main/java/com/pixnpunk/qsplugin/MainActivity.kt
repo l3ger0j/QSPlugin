@@ -132,13 +132,18 @@ class MainActivity : ComponentActivity() {
 
         root = RealRootComponent(
             componentContext = defaultComponentContext(),
-            appContext = this.applicationContext,
+            onConfirmPerm = {
+                requestFolderAccess.launch(gameDirUri)
+            },
+            onStartActivity = {
+                startActivity(it)
+            }
         )
 
         val gameDirFile = gameDirUri.toDocumentFile(this)
         if (gameDirFile != null) {
             if (!gameDirFile.canModify(this)) {
-                requestFolderAccess.launch(gameDirUri)
+                root.doShowReqPermDialog()
             } else {
                 if (!root.model.value.isGameRunning) {
                     root.runGame(gameId, gameTitle, gameDirUri, gameFileUri)

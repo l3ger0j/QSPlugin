@@ -56,13 +56,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.component.inject
 import java.io.FileNotFoundException
 import kotlin.contracts.ExperimentalContracts
 
 class RealRootComponent(
     private val componentContext: ComponentContext,
-    private val appContext: Context
+    private val onConfirmPerm: () -> Unit,
+    private val onStartActivity: (Intent) -> Unit
 ) : ComponentContext by componentContext, RootComponent, KoinComponent {
 
     private val supervisorService: SupervisorViewModel by inject()
@@ -92,7 +94,8 @@ class RealRootComponent(
             RealDialogsComponent(
                 componentContext = context,
                 dialogConfig = config,
-                onCleanError = { onCleanError() },
+                onCleanError = ::onCleanError,
+                onConfirmPerm = onConfirmPerm,
                 onEnterValue = { onEnterValue(it.first, it.second) },
                 onSelMenuItem = { onSelMenuItem(it) },
                 onDismissed = dialogNavigation::dismiss
@@ -105,6 +108,14 @@ class RealRootComponent(
 
     fun onLoadFileResult(fileUri: Uri) {
         store.accept(RootStore.Intent.OnLoadFile(fileUri))
+    }
+
+    override fun doShowReqPermDialog() {
+        dialogNavigation.activate(
+            configuration = DialogConfig(
+                dialogState = DialogState.DIALOG_PERMISSION,
+            )
+        )
     }
 
     override fun doCreateSaveIntent() {
@@ -198,7 +209,6 @@ class RealRootComponent(
         dialogNavigation.activate(
             configuration = DialogConfig(
                 dialogState = DialogState.DIALOG_INPUT,
-                dialogInputString = ""
             )
         )
     }
@@ -218,7 +228,7 @@ class RealRootComponent(
 
         supervisorService.startService(serviceTransExtra)
 
-        rootDir = gameDirUri.toDocumentFile(appContext)
+        rootDir = gameDirUri.toDocumentFile(get())
 
         store.accept(RootStore.Intent.StartGameDialogFlow(rootDir))
     }
@@ -231,8 +241,8 @@ class RealRootComponent(
     fun getSavesDir(): DocumentFile? {
         // (slot + 1) + ".sav"
         val dir = rootDir
-        return if (dir.isWritableDir(appContext)) {
-            dir.makeFolder(appContext, "saves", CreateMode.REUSE)
+        return if (dir.isWritableDir(get())) {
+            dir.makeFolder(get(), "saves", CreateMode.REUSE)
         } else {
             null
         }
@@ -271,7 +281,7 @@ class RealRootComponent(
                         uriDecode.toUri()
                     ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.also {
                         try {
-                            appContext.startActivity(it)
+                            onStartActivity(it)
                         } catch (e: ActivityNotFoundException) {
                             Log.e(javaClass.simpleName, "shouldOverrideUrlLoading: ERROR!", e)
                         }
@@ -283,7 +293,7 @@ class RealRootComponent(
                         uriScheme.replace("file:/", "https:").toUri()
                     ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.also {
                         try {
-                            appContext.startActivity(it)
+                            onStartActivity(it)
                         } catch (e: ActivityNotFoundException) {
                             Log.e(javaClass.simpleName, "shouldOverrideUrlLoading: ERROR!", e)
                         }
@@ -297,23 +307,18 @@ class RealRootComponent(
             view: WebView,
             request: WebResourceRequest
         ): WebResourceResponse? {
-            val uriScheme = request.url.scheme
-            if (uriScheme == null) return super.shouldInterceptRequest(view, request)
+            val uriScheme = request.url.scheme ?: return super.shouldInterceptRequest(view, request)
             if (!uriScheme.startsWith("file")) return super.shouldInterceptRequest(view, request)
-            if (!rootDir.isWritableDir(appContext)) return super.shouldInterceptRequest(
-                view,
-                request
-            )
+            if (!rootDir.isWritableDir(get())) return super.shouldInterceptRequest(view, request)
 
             try {
-                val uriPath = request.url.path
-                if (uriPath == null) throw NullPointerException()
-                val imageFile = rootDir?.child(appContext, uriPath)
-                if (imageFile.isWritableFile(appContext)) {
+                val uriPath = request.url.path ?: throw NullPointerException()
+                val imageFile = rootDir?.child(get(), uriPath)
+                if (imageFile.isWritableFile(get())) {
                     return WebResourceResponse(
                         getMimeTypeFromFileName(imageFile.name),
                         null,
-                        appContext.contentResolver.openInputStream(imageFile.uri)
+                        get<Context>().contentResolver.openInputStream(imageFile.uri)
                     )
                 } else {
                     throw FileNotFoundException()

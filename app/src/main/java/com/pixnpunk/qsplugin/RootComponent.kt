@@ -30,6 +30,7 @@ sealed interface RootComponent {
         gameFileUri: Uri
     )
 
+    fun doShowReqPermDialog()
     fun doCreateSaveIntent()
     fun doCreateLoadIntent()
     fun restartGame()

@@ -7,6 +7,7 @@ sealed interface DialogsComponent {
     val settingsFlow: StateFlow<GameSettings>
     val dialogConfig: DialogConfig
     val onCleanError: () -> Unit
+    val onConfirmPerm: () -> Unit
     val onEnterValue: (Pair<String, Boolean>) -> Unit
     val onSelMenuItem: (Int) -> Unit
     val onDismissed: () -> Unit
