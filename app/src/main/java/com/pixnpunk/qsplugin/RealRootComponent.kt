@@ -253,8 +253,7 @@ class RealRootComponent(
             view: WebView,
             request: WebResourceRequest
         ): Boolean {
-            val uriScheme = request.url.scheme
-            if (uriScheme == null) return false
+            val uriScheme = request.url.scheme ?: return false
             val uriDecode = Uri.decode(request.url.toString())
 
             when (uriScheme) {
