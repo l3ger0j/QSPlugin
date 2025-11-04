@@ -9,7 +9,9 @@ import androidx.compose.runtime.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent(component: MainComponent) {
+fun MainContent(
+    component: MainComponent
+) {
     val state by component.model.collectAsState()
     val settings by component.settingsFlow.collectAsState()
 

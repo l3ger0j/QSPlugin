@@ -24,7 +24,9 @@ import androidx.compose.ui.unit.sp
 import com.pixnpunk.utils.ViewUtil.toTypeface
 
 @Composable
-fun ObjectContent(component: ObjectComponent) {
+fun ObjectContent(
+    component: ObjectComponent
+) {
     val state by component.model.collectAsState()
     val settings by component.settingsFlow.collectAsState()
 

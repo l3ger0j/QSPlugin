@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
-fun ExtraContent(component: ExtraComponent) {
+fun ExtraContent(
+    component: ExtraComponent
+) {
     val state by component.model.collectAsState()
     val settings by component.settingsFlow.collectAsState()
 
