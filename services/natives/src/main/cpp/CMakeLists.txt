@@ -15,7 +15,7 @@ FetchContent_MakeAvailable(qsp-external)
 
 FetchContent_Declare(qslibsnx-external
         GIT_REPOSITORY https://github.com/l3ger0j/QSLibSNX.git
-        GIT_TAG 89e7e261276f0dfd3c21aedb0d84a0cca2d10d78
+        GIT_TAG b2d9defb3e4ee7946649268f1a67ad08009458aa
         GIT_PROGRESS true
         SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-download"
         SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsnx-src"
@@ -25,7 +25,7 @@ FetchContent_MakeAvailable(qslibsnx-external)
 
 FetchContent_Declare(qslibsdh-external
         GIT_REPOSITORY https://github.com/l3ger0j/QSLibSDH.git
-        GIT_TAG e7a084b7a9b70279f87047e8ff78056829f9f55f
+        GIT_TAG 800ac9c4e034a35f4a79fd3fd6b3e0bf3d902a48
         GIT_PROGRESS true
         SUBBUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-download"
         SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/qslibsdh-src"
@@ -34,3 +34,5 @@ FetchContent_Declare(qslibsdh-external
 FetchContent_MakeAvailable(qslibsdh-external)
 
 #add_subdirectory(QSLibSDH)
+#add_subdirectory(QSLibSNX)
+#add_subdirectory(qsp)
