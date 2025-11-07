@@ -308,31 +308,27 @@ class RealRootComponent(
         ): WebResourceResponse? {
             val uriScheme = request.url.scheme ?: return super.shouldInterceptRequest(view, request)
             if (!uriScheme.startsWith("file")) return super.shouldInterceptRequest(view, request)
-            if (!rootDir.isWritableDir(get())) return super.shouldInterceptRequest(view, request)
+            val mRootDir = rootDir
+            if (!mRootDir.isWritableDir(get())) return super.shouldInterceptRequest(view, request)
 
-            try {
+            return runCatching {
                 val uriPath = request.url.path ?: throw NullPointerException()
-                val imageFile = rootDir?.child(get(), uriPath)
-                if (imageFile.isWritableFile(get())) {
-                    return WebResourceResponse(
-                        getMimeTypeFromFileName(imageFile.name),
+                val mediaFile = mRootDir.child(get(), uriPath)
+                if (mediaFile.isWritableFile(get())) {
+                    WebResourceResponse(
+                        getMimeTypeFromFileName(mediaFile.name),
                         null,
-                        get<Context>().contentResolver.openInputStream(imageFile.uri)
+                        get<Context>().contentResolver.openInputStream(mediaFile.uri)
                     )
                 } else {
                     throw FileNotFoundException()
                 }
-            } catch (ex: Exception) {
-                when (ex) {
-                    is NullPointerException,
-                    is FileNotFoundException -> {
-//                        if (getSettingsController().isUseImageDebug) {
-//                            doShowErrorDialog(uri.getPath(), ErrorType.IMAGE_ERROR)
-//                        }
-                        Log.e(javaClass.simpleName, "shouldInterceptRequest: ERROR!", ex)
-                    }
-                }
-                return super.shouldInterceptRequest(view, request)
+            }.getOrElse {
+//                if (getSettingsController().isUseImageDebug) {
+//                    doShowErrorDialog(uri.getPath(), ErrorType.IMAGE_ERROR)
+//                }
+                Log.e(javaClass.simpleName, "shouldInterceptRequest: ERROR!", it)
+                super.shouldInterceptRequest(view, request)
             }
         }
     }
