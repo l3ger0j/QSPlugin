@@ -60,7 +60,7 @@ class AudioPlayerViewModel: ViewModel(), DefaultLifecycleObserver {
         runOnAudioContext {
             val mediaPlayerVolume = volume / 100f
 
-            try {
+            runCatching {
                 val player = mediaPlayers.getOrPut(soundFileUri) {
                     createNewSound(context, soundFileUri)
                 }
@@ -70,8 +70,8 @@ class AudioPlayerViewModel: ViewModel(), DefaultLifecycleObserver {
                 if (isSoundEnabled && !isPaused) {
                     player.start()
                 }
-            } catch (e: IOException) {
-                Log.e("AudioPlayerViewModel", "Failed to prepare MediaPlayer for $soundFileUri", e)
+            }.onFailure {
+                Log.e("AudioPlayerViewModel", "Failed to prepare MediaPlayer for $soundFileUri", it)
                 mediaPlayers.remove(soundFileUri)
             }
         }
