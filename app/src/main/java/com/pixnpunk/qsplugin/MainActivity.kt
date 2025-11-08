@@ -3,6 +3,8 @@ package com.pixnpunk.qsplugin
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Process.killProcess
+import android.os.Process.myPid
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -180,7 +182,10 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            RootContent(root)
+            RootContent(
+                component = root,
+                onFinish = { killProcess(myPid()) }
+            )
         }
     }
 

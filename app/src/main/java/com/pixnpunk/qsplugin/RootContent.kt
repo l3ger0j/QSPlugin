@@ -1,7 +1,5 @@
 package com.pixnpunk.qsplugin
 
-import android.os.Process.killProcess
-import android.os.Process.myPid
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -18,7 +16,8 @@ import com.pixnpunk.qsplugin.theme.QSPluginTheme
 
 @Composable
 fun RootContent(
-    component: RootComponent
+    component: RootComponent,
+    onFinish: () -> Unit
 ) {
     val stack by component.childStack.subscribeAsState()
     val dialogSlot by component.dialogSlot.subscribeAsState()
@@ -36,9 +35,7 @@ fun RootContent(
                 RootAppBar(
                     component = component,
                     activeComponent = activeComponent,
-                    onFinishActivity = {
-                        killProcess(myPid())
-                    }
+                    onFinishActivity = onFinish
                 )
             },
             bottomBar = { RootNavBar(component, activeComponent) }
