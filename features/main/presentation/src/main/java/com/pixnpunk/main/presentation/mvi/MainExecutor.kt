@@ -25,9 +25,7 @@ class MainExecutor(
 
     override fun executeIntent(intent: MainStore.Intent) {
         when (intent) {
-            is MainStore.Intent.ActionClick -> {
-                service.onActionClicked(intent.index)
-            }
+            is MainStore.Intent.ActionClick -> service.onActionClicked(intent.index)
         }
     }
 
@@ -36,10 +34,8 @@ class MainExecutor(
             is MainStore.Action.StartActionsVisFlow -> {
                 outScope.launch {
                     service.gameElementVis
-                        .filter { it -> it.first == LibTypeWindow.ACTS }
-                        .collect { vis ->
-                            scope.launch { dispatch(UpdateVisActions(vis.second)) }
-                        }
+                        .filter { it.first == LibTypeWindow.ACTS }
+                        .collect { scope.launch { dispatch(UpdateVisActions(it.second)) } }
                 }
             }
 
