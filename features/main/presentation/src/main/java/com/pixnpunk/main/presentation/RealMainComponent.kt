@@ -10,12 +10,12 @@ import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.pixnpunk.main.presentation.mvi.MainStore
+import com.pixnpunk.main.presentation.mvi.RealMainStore
+import com.pixnpunk.settings.SettingsRepo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import com.pixnpunk.main.presentation.mvi.RealMainStore
-import com.pixnpunk.settings.SettingsRepo
 
 class RealMainComponent(
     private val componentContext: ComponentContext,
@@ -24,7 +24,18 @@ class RealMainComponent(
 
     private val settingsRepo: SettingsRepo by inject()
     private val store = instanceKeeper.getStore {
-        RealMainStore(DefaultStoreFactory()).create()
+        RealMainStore(
+            storeFactory = DefaultStoreFactory(),
+            stateKeeper = stateKeeper
+        ).create()
+    }
+
+    init {
+        stateKeeper.register(
+            key = "MainStoreSavedState",
+            strategy = MainStore.State.serializer(),
+            supplier = { store.state }
+        )
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
