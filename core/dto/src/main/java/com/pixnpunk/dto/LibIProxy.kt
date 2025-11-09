@@ -21,7 +21,6 @@ interface LibIProxy {
     fun onActionClicked(index: Int)
     fun onObjectSelected(index: Int)
     fun onInputAreaClicked(code: String)
-    fun onUseExecutorString(code: String)
 
     /**
      * Starts execution of the specified line of code in the library.

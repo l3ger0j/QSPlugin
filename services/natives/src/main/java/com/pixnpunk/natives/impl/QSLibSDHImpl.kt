@@ -287,10 +287,6 @@ class QSLibSDHImpl(
         }
     }
 
-    override fun onUseExecutorString(code: String) {
-        runOnQspThread { executeQspCommand { execString(code, true) } }
-    }
-
     override fun execute(code: String) {
         runOnQspThread { executeQspCommand { execString(code, true) } }
     }
