@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
@@ -39,6 +40,7 @@ fun MainContentActionsList(
     settings: GameSettings,
     actions: List<LibGenItem>,
     onActionClicked: (Int) -> Unit,
+    listState: LazyListState
 ) {
     var listItemHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
@@ -53,6 +55,7 @@ fun MainContentActionsList(
                     listItemHeight * actions.size
                 }
             ),
+        state = listState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         itemsIndexed(actions) { key, act ->
