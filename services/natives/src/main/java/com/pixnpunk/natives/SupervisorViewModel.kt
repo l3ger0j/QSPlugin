@@ -121,29 +121,25 @@ class SupervisorViewModel(
     }
 
     fun startService(
-        bundle: Bundle
+        gameId: Long,
+        gameTitle: String,
+        gameDirUri: Uri,
+        gameFileUri: Uri
     ) {
-        val id = bundle.getLong("gameId", 0)
-        val title = bundle.getString("gameTitle", "Undefined")
-        val dirUri = bundle.getParcelable("gameDirUri") ?: Uri.EMPTY
-        val fileUri = bundle.getParcelable("gameFileUri") ?: Uri.EMPTY
-
-        gameDirUri = dirUri
-
         when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.startLibThread()
-                libNativeByte.runGame(id, title, dirUri, fileUri)
+                libNativeByte.runGame(gameId, gameTitle, gameDirUri, gameFileUri)
             }
 
             NativeLibAuthors.SONNIX -> {
                 libNativeSonnix.startLibThread()
-                libNativeSonnix.runGame(id, title, dirUri, fileUri)
+                libNativeSonnix.runGame(gameId, gameTitle, gameDirUri, gameFileUri)
             }
 
             NativeLibAuthors.SEEDHARTHA -> {
                 libNativeSeedharta.startLibThread()
-                libNativeSeedharta.runGame(id, title, dirUri, fileUri)
+                libNativeSeedharta.runGame(gameId, gameTitle, gameDirUri, gameFileUri)
             }
         }
 

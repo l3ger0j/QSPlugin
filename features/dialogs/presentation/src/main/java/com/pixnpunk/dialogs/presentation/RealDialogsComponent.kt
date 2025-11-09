@@ -11,6 +11,7 @@ class RealDialogsComponent(
     override val onCleanError: () -> Unit,
     override val onConfirmPerm: () -> Unit,
     override val onEnterValue: (Pair<String, Boolean>) -> Unit,
+    override val onExecValue: (String) -> Unit,
     override val onSelMenuItem: (Int) -> Unit,
     override val onDismissed: () -> Unit,
 ) : ComponentContext by componentContext, DialogsComponent, KoinComponent {

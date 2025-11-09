@@ -9,6 +9,7 @@ sealed interface DialogsComponent {
     val onCleanError: () -> Unit
     val onConfirmPerm: () -> Unit
     val onEnterValue: (Pair<String, Boolean>) -> Unit
+    val onExecValue: (String) -> Unit
     val onSelMenuItem: (Int) -> Unit
     val onDismissed: () -> Unit
 }

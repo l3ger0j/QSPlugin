@@ -41,13 +41,13 @@ fun DialogInputContent(
                 if (component.dialogConfig.isDialogInputError) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = AnnotatedString.Companion.fromHtml(component.dialogConfig.dialogInputErrorString),
+                        text = AnnotatedString.fromHtml(component.dialogConfig.dialogInputErrorString),
                         color = MaterialTheme.colorScheme.error
                     )
                 } else {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = AnnotatedString.Companion.fromHtml(component.dialogConfig.dialogInputString)
+                        text = AnnotatedString.fromHtml(component.dialogConfig.dialogInputString)
                     )
                 }
             }
@@ -56,7 +56,11 @@ fun DialogInputContent(
         TextButton(
             onClick = {
                 val isBox = component.dialogConfig.isDialogInputBox
-                component.onEnterValue(enterValue to isBox)
+                if (component.dialogConfig.dialogState == DialogState.DIALOG_EXECUTOR) {
+                    component.onExecValue(enterValue)
+                } else {
+                    component.onEnterValue(enterValue to isBox)
+                }
                 component.onDismissed()
             },
             modifier = Modifier.align(Alignment.End),

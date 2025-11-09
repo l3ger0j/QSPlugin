@@ -39,6 +39,7 @@ sealed interface RootComponent {
     fun doShowDialogMessage(inputString: String)
     fun doShowDialogMenu(inputString: String, inputListItems: List<LibGenItem>)
     fun doShowDialogInput()
+    fun doShowDialogExecutor()
 
     sealed class Child {
         class MainChild(val component: MainComponent) : Child()

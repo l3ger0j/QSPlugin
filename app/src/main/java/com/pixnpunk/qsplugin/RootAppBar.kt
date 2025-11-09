@@ -55,9 +55,9 @@ fun RootAppBar(
                     if (state.isInputEnabled) {
                         component.doShowDialogInput()
                     }
-//                    if (state.isExecutorEnabled) {
-//                        component.navigation(RealRootComponent.ChildConfig.Input)
-//                    }
+                    if (state.isExecutorEnabled) {
+                        component.doShowDialogExecutor()
+                    }
                 }) {
                     Icon(
                         imageVector = Icons.Filled.Terminal,

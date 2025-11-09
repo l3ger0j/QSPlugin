@@ -4,6 +4,7 @@ import com.pixnpunk.dto.LibTypeDialog
 
 enum class DialogState {
     DIALOG_ERROR,
+    DIALOG_EXECUTOR,
     DIALOG_PERMISSION,
     DIALOG_PICTURE,
     DIALOG_MESSAGE,

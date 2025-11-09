@@ -97,6 +97,7 @@ class RealRootComponent(
                 onCleanError = ::onCleanError,
                 onConfirmPerm = onConfirmPerm,
                 onEnterValue = { onEnterValue(it.first, it.second) },
+                onExecValue = { onExecValue(it) },
                 onSelMenuItem = { onSelMenuItem(it) },
                 onDismissed = dialogNavigation::dismiss
             )
@@ -132,6 +133,10 @@ class RealRootComponent(
 
     private fun onEnterValue(inputString: String, isBox: Boolean) {
         store.accept(RootStore.Intent.OnEnterValue(inputString, isBox))
+    }
+
+    private fun onExecValue(inputString: String) {
+        store.accept(RootStore.Intent.OnExecCode(inputString))
     }
 
     private fun onCleanError() {
@@ -213,20 +218,21 @@ class RealRootComponent(
         )
     }
 
+    override fun doShowDialogExecutor() {
+        dialogNavigation.activate(
+            configuration = DialogConfig(
+                dialogState = DialogState.DIALOG_EXECUTOR
+            )
+        )
+    }
+
     override fun runGame(
         gameId: Long,
         gameTitle: String,
         gameDirUri: Uri,
         gameFileUri: Uri
     ) {
-        val serviceTransExtra = Bundle().apply {
-            putLong("gameId", gameId)
-            putString("gameTitle", gameTitle)
-            putParcelable("gameDirUri", gameDirUri)
-            putParcelable("gameFileUri", gameFileUri)
-        }
-
-        supervisorService.startService(serviceTransExtra)
+        supervisorService.startService(gameId, gameTitle, gameDirUri, gameFileUri)
 
         rootDir = gameDirUri.toDocumentFile(get())
 
@@ -268,9 +274,9 @@ class RealRootComponent(
                         }
                         .let {
                             if (it.isContainsHtmlTags()) {
-                                store.accept(RootStore.Intent.OnExecCode(it.removeHtmlTags()))
+                                onExecValue(it.removeHtmlTags())
                             } else {
-                                store.accept(RootStore.Intent.OnExecCode(it))
+                                onExecValue(it)
                             }
                         }
 

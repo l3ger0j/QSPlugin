@@ -53,7 +53,7 @@ fun DialogsMainContent(
                         )
                     }
 
-                DialogState.DIALOG_INPUT -> DialogInputContent(component)
+                DialogState.DIALOG_INPUT, DialogState.DIALOG_EXECUTOR -> DialogInputContent(component)
 
                 DialogState.DIALOG_MENU -> DialogMenuContent(component)
             }
