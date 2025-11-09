@@ -15,8 +15,8 @@ android {
         applicationId = "com.pixnpunk.qsplugin"
         minSdk = 26
         targetSdk = 36
-        versionCode = 100100
-        versionName = "1.1.0-beta"
+        versionCode = 200000
+        versionName = "1.0.0-rc"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         androidResources.localeFilters += listOf("en", "ru")
     }
