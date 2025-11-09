@@ -126,6 +126,8 @@ class SupervisorViewModel(
         gameDirUri: Uri,
         gameFileUri: Uri
     ) {
+        this.gameDirUri = gameDirUri
+
         when (mLibAuthors) {
             NativeLibAuthors.BYTE -> {
                 libNativeByte.startLibThread()
