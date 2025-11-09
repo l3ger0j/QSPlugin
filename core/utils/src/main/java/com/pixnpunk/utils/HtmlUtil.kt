@@ -3,6 +3,7 @@ package com.pixnpunk.utils
 import android.util.Base64
 import com.pixnpunk.dto.GameSettings
 import com.pixnpunk.utils.Base64Util.encodeBase64
+import com.pixnpunk.utils.ColorUtil.toHexColorStr
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.safety.Safelist
@@ -48,9 +49,9 @@ object HtmlUtil {
         }
 
         val pageHeadTemplate = PAGE_HEAD_TEMPLATE
-            .replace("QSPTEXTCOLOR", settings.textColor.toHexString())
-            .replace("QSPBACKCOLOR", settings.backColor.toHexString())
-            .replace("QSPLINKCOLOR", settings.linkColor.toHexString())
+            .replace("QSPTEXTCOLOR", settings.textColor.toHexColorStr())
+            .replace("QSPBACKCOLOR", settings.backColor.toHexColorStr())
+            .replace("QSPLINKCOLOR", settings.linkColor.toHexColorStr())
             .replace("QSPFONTSTYLE", settings.typeface.name.lowercase())
             .replace("QSPFONTSIZE", settings.fontSize.toString())
 
