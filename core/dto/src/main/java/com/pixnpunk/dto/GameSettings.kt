@@ -34,6 +34,6 @@ data class GameSettings(
     val isImmersModeEnabled: Boolean = true,
     val nativeLibFrom: NativeLibAuthors = NativeLibAuthors.SEEDHARTHA,
     val visActsCount: Int = 3,
-    val language: String? = "",
-    val theme: String? = ""
+    val language: String = "",
+    val theme: String = ""
 )
