@@ -158,27 +158,17 @@ class MainActivity : ComponentActivity() {
         mainScope.launch {
             root.label.collect {
                 when (it) {
-                    is RootStore.Label.ShowDialogDefault -> root.doShowDefaultDialog(
-                        it.inputString,
-                        it.dialogState
-                    )
+                    is RootStore.Label.ShowDialogDefault ->
+                        root.doShowDefaultDialog(it.inputString, it.dialogState)
 
-                    is RootStore.Label.ShowDialogMenu -> root.doShowDialogMenu(
-                        it.inputString,
-                        it.inputListItems
-                    )
+                    is RootStore.Label.ShowDialogMenu ->
+                        root.doShowDialogMenu(it.inputString, it.inputListItems)
 
-                    is RootStore.Label.ShowDialogMessage -> root.doShowDialogMessage(
-                        it.inputString
-                    )
+                    is RootStore.Label.ShowDialogMessage -> root.doShowDialogMessage(it.inputString)
 
-                    is RootStore.Label.ShowLoadFilePicker -> {
-                        requestOpenFile.launch(it.intent)
-                    }
+                    is RootStore.Label.ShowLoadFilePicker -> requestOpenFile.launch(it.intent)
 
-                    is RootStore.Label.ShowSaveFilePicker -> {
-                        requestCreateFile.launch(it.intent)
-                    }
+                    is RootStore.Label.ShowSaveFilePicker -> requestCreateFile.launch(it.intent)
                 }
             }
         }
