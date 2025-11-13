@@ -11,5 +11,4 @@
     <string name="act_load">Загрузить игру из файла</string>
     <string name="act_restart">Перезапустить игру</string>
     <string name="act_exit">Выйти из приложения</string>
-
 </resources>

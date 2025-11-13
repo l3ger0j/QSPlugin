@@ -10,7 +10,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.provider.DocumentsContractCompat.buildDocumentUriUsingTree
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -174,7 +177,15 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val settings by settingsRepo.settingsState.collectAsState()
+
             RootContent(
+                isDarkTheme = when {
+                    settings.theme.contains("auto") -> isSystemInDarkTheme()
+                    settings.theme.contains("dark") -> true
+                    settings.theme.contains("light") -> false
+                    else -> false
+                },
                 component = root,
                 onFinish = { killProcess(myPid()) }
             )

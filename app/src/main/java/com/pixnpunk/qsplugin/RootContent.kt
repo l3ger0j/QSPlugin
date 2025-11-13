@@ -1,9 +1,11 @@
 package com.pixnpunk.qsplugin
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.stack.Children
@@ -16,6 +18,7 @@ import com.pixnpunk.qsplugin.theme.QSPluginTheme
 
 @Composable
 fun RootContent(
+    isDarkTheme: Boolean,
     component: RootComponent,
     onFinish: () -> Unit
 ) {
@@ -24,7 +27,9 @@ fun RootContent(
 
     val activeComponent = stack.active.instance
 
-    QSPluginTheme {
+    QSPluginTheme(
+        darkTheme = isDarkTheme
+    ) {
         dialogSlot.child?.instance?.also {
             DialogsMainContent(it)
         }

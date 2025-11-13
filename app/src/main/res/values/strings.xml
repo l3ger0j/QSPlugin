@@ -11,5 +11,4 @@
     <string name="act_load">Load game from file</string>
     <string name="act_restart">Restart game</string>
     <string name="act_exit">Exit the application</string>
-
 </resources>
