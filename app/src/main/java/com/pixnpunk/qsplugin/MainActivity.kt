@@ -1,6 +1,7 @@
 package com.pixnpunk.qsplugin
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Process.killProcess
@@ -12,8 +13,10 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.provider.DocumentsContractCompat.buildDocumentUriUsingTree
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -34,6 +37,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.android.ext.android.inject
+import java.util.Locale
 import kotlin.concurrent.thread
 
 class MainActivity : ComponentActivity() {
@@ -179,16 +183,28 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by settingsRepo.settingsState.collectAsState()
 
-            RootContent(
-                isDarkTheme = when {
-                    settings.theme.contains("auto") -> isSystemInDarkTheme()
-                    settings.theme.contains("dark") -> true
-                    settings.theme.contains("light") -> false
-                    else -> false
-                },
-                component = root,
-                onFinish = { killProcess(myPid()) }
-            )
+            val locale = Locale.of(settings.language)
+            Locale.setDefault(locale)
+
+            val configuration = Configuration(applicationContext.resources.configuration)
+            configuration.setLocale(locale)
+            configuration.setLayoutDirection(locale)
+
+            CompositionLocalProvider(
+                LocalContext provides
+                        applicationContext.createConfigurationContext(configuration)
+            ) {
+                RootContent(
+                    isDarkTheme = when {
+                        settings.theme.contains("auto") -> isSystemInDarkTheme()
+                        settings.theme.contains("dark") -> true
+                        settings.theme.contains("light") -> false
+                        else -> false
+                    },
+                    component = root,
+                    onFinish = { killProcess(myPid()) }
+                )
+            }
         }
     }
 
