@@ -79,8 +79,9 @@ class QSLibSNXImpl(
         val gameFileUri = gameState.gameFileUri
         val gameFile = gameFileUri.toDocumentFile(context) ?: return false
         val gameFileFullPath = gameFile.getAbsolutePath(context)
-        val gameData = gameFileUri.readFileContents(context) ?: return false
-        return executeQspCommand { loadGameWorldFromData(gameData, gameFileFullPath) }
+        val gameFileDescriptor = context.contentResolver
+            .openFileDescriptor(gameFileUri, "rw")?.detachFd() ?: return false
+        return executeQspCommand { loadGameWorldFromFD(gameFileDescriptor, gameFileFullPath) }
     }
 
     private fun showLastQspError() {
@@ -248,8 +249,10 @@ class QSLibSNXImpl(
             return
         }
 
-        val gameData = uri.readFileContents(context) ?: return
-        executeQspCommand { openSavedGameFromData(gameData, true) }
+        val gameFileDescriptor = context.contentResolver
+            .openFileDescriptor(uri, "r")?.detachFd() ?: return
+
+        executeQspCommand { openSavedGameFromFD(gameFileDescriptor, false) }
     }
 
     override fun saveGameState(uri: Uri) {
@@ -258,10 +261,10 @@ class QSLibSNXImpl(
             return
         }
 
-        uri.writeFileContents(
-            context = context,
-            dataToWrite = saveGameAsData(false) ?: return
-        )
+        val gameFileDescriptor = context.contentResolver
+            .openFileDescriptor(uri, "w")?.detachFd() ?: return
+
+        saveGameByFD(gameFileDescriptor, false)
     }
 
     override fun onActionClicked(index: Int) {

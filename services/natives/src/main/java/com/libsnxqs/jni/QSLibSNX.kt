@@ -1,7 +1,5 @@
 package com.libsnxqs.jni
 
-import java.io.FileDescriptor
-
 abstract class QSLibSNX {
     @JvmRecord
     data class ListItem(val image: String?, val text: String?)
@@ -36,7 +34,7 @@ abstract class QSLibSNX {
     external fun getCompiledDateTime(): String?
 
     // --- Callback's ---
-    external fun isInCallBack(): Boolean
+//    external fun isInCallBack(): Boolean
 //    external fun setCallBack(type: Int, func: QSP_CALLBACK)
 
     // --- Main Description ---
@@ -79,11 +77,11 @@ abstract class QSLibSNX {
 
     // --- Game ---
     external fun loadGameWorldFromData(data: ByteArray, fileName: String): Boolean
-    external fun loadGameWorldFromFD(fileDescriptor: FileDescriptor, fileName: String): Boolean
+    external fun loadGameWorldFromFD(fileDescriptor: Int, fileName: String): Boolean
     external fun saveGameAsData(isRefresh: Boolean): ByteArray?
-    external fun saveGameByFD(fileDescriptor: FileDescriptor, isRefresh: Boolean): Boolean
+    external fun saveGameByFD(fileDescriptor: Int, isRefresh: Boolean): Boolean
     external fun openSavedGameFromData(data: ByteArray, isRefresh: Boolean): Boolean
-    external fun openSavedGameFromFD(fileDescriptor: FileDescriptor, isRefresh: Boolean): Boolean
+    external fun openSavedGameFromFD(fileDescriptor: Int, isRefresh: Boolean): Boolean
     external fun restartGame(isRefresh: Boolean): Boolean
 
     // --- Menu ---
@@ -116,5 +114,5 @@ abstract class QSLibSNX {
     open fun onShowMenuNew(): Int = -1
     open fun onDeleteMenu() {}
 
-    open fun onGetFileContents(path: String?): ByteArray? = null
+    open fun onGetFileDesc(path: String?): Int = -1
 }
