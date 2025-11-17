@@ -183,7 +183,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by settingsRepo.settingsState.collectAsState()
 
-            val locale = Locale.of(settings.language)
+            val locale = Locale(settings.language)
             Locale.setDefault(locale)
 
             val configuration = Configuration(applicationContext.resources.configuration)
